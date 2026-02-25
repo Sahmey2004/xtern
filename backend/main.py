@@ -89,6 +89,40 @@ async def data_summary():
         counts[table] = result.count
     return {'status': 'ok', 'counts': counts}
 
+@app.get("/products")
+async def get_products():
+    """Returns counts of all seeded tables."""
+    try:
+        from supabase import create_client
+
+        client = create_client(
+            os.getenv("NEXT_PUBLIC_SUPABASE_URL"),
+            os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+        )
+
+        tables = [
+            'products', 'suppliers', 'supplier_products',
+            'forecasts', 'inventory', 'container_specs',
+            'supplier_scoring_weights'
+        ]
+
+        counts = {}
+        for table in tables:
+            result = client.table(table).select('*', count='exact').execute()
+            counts[table] = result.count
+
+        return {
+            "status": "ok",
+            "counts": counts
+        }
+
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+
 
 # ─── REQUEST/RESPONSE MODELS ─────────────────────────────────
 
