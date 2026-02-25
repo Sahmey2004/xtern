@@ -1,36 +1,136 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
+import { supabase } from './supabase.js';
+import { jsonResponse, errorResponse } from './helper.js';
 
 const server = new McpServer({
-  name: 'erp-data-server',       // CHANGE for each server
-  version: '0.1.0',
+  name: 'erp-data-server',
+  version: '1.0.0',
 });
 
-// Health check / ping tool
+// ─── Tool 1: get_products ───
 server.tool(
-  'ping',
-  'Health check - returns server name and timestamp',
-  {},  // no input parameters
-  async () => {
-    return {
-      content: [{
-        type: 'text' as const,
-        text: JSON.stringify({
-          server: 'erp-data-server',  // CHANGE for each server
-          status: 'ok',
-          timestamp: new Date().toISOString(),
-        })
-      }]
-    };
+  'get_products',
+  'Fetch product catalog. Optionally filter by category.',
+  { category: z.string().optional().describe('Filter by category: filters, gaskets, engine_parts, electrical') },
+  async ({ category }) => {
+    try {
+      let query = supabase.from('products').select('*');
+      if (category) query = query.eq('category', category);
+      const { data, error } = await query;
+      if (error) return errorResponse(error.message);
+      return jsonResponse({ count: data.length, products: data });
+    } catch (e: any) { return errorResponse(e.message); }
   }
 );
 
-// Start the server
+// ─── Tool 2: get_inventory ───
+server.tool(
+  'get_inventory',
+  'Fetch current inventory levels. Pass sku for one product, or omit for all.',
+  { sku: z.string().optional().describe('Product SKU. Omit for all inventory.') },
+  async ({ sku }) => {
+    try {
+      let query = supabase.from('inventory').select(`
+        *,
+        products(name, category, moq, unit_weight_kg, unit_cbm, unit_price_usd)
+      `);
+      if (sku) query = query.eq('sku', sku);
+      const { data, error } = await query;
+      if (error) return errorResponse(error.message);
+      return jsonResponse({ count: data.length, inventory: data });
+    } catch (e: any) { return errorResponse(e.message); }
+  }
+);
+
+// ─── Tool 3: get_forecasts ───
+server.tool(
+  'get_forecasts',
+  'Fetch demand forecast data for a SKU. Returns monthly forecast_qty and actual_qty.',
+  {
+    sku: z.string().describe('Product SKU'),
+    months: z.number().optional().describe('Number of months to fetch (default 12)'),
+  },
+  async ({ sku, months }) => {
+    try {
+      const limit = months ?? 12;
+      const { data, error } = await supabase
+        .from('forecasts')
+        .select('*')
+        .eq('sku', sku)
+        .order('period', { ascending: true })
+        .limit(limit);
+      if (error) return errorResponse(error.message);
+
+      // Calculate demand variability stats
+      const historicalDiffs = data
+        .filter((r: any) => r.actual_qty !== null)
+        .map((r: any) => r.actual_qty - r.forecast_qty);
+
+      const mean = historicalDiffs.length > 0
+        ? historicalDiffs.reduce((a: number, b: number) => a + b, 0) / historicalDiffs.length : 0;
+      const variance = historicalDiffs.length > 0
+        ? historicalDiffs.reduce((s: number, d: number) => s + (d - mean) ** 2, 0) / historicalDiffs.length : 0;
+      const stdDev = Math.sqrt(variance);
+
+      return jsonResponse({
+        sku,
+        months: data.length,
+        forecasts: data,
+        variability: {
+          mean_error: Math.round(mean * 100) / 100,
+          std_deviation: Math.round(stdDev * 100) / 100,
+          historical_months: historicalDiffs.length,
+        },
+      });
+    } catch (e: any) { return errorResponse(e.message); }
+  }
+);
+
+// ─── Tool 4: update_buffer_stock ───
+server.tool(
+  'update_buffer_stock',
+  'Write calculated buffer stock and reorder point back to inventory table.',
+  {
+    sku: z.string().describe('Product SKU'),
+    buffer_stock: z.number().describe('Calculated buffer stock quantity'),
+    reorder_point: z.number().describe('Calculated reorder point'),
+  },
+  async ({ sku, buffer_stock, reorder_point }) => {
+    try {
+      const { data, error } = await supabase
+        .from('inventory')
+        .update({ buffer_stock, reorder_point, updated_at: new Date().toISOString() })
+        .eq('sku', sku)
+        .select();
+      if (error) return errorResponse(error.message);
+      return jsonResponse({ updated: true, inventory: data[0] });
+    } catch (e: any) { return errorResponse(e.message); }
+  }
+);
+
+// ─── Tool 5: upload_erp_excel ───
+server.tool(
+  'upload_erp_excel',
+  'Parse an uploaded Excel file (base64) and upsert data into products/inventory/forecasts.',
+  { base64_data: z.string().describe('Base64 encoded Excel file content') },
+  async ({ base64_data }) => {
+    try {
+      // For now, return a placeholder. Full Excel parsing will be added in Part 6
+      // when the file upload UI component is built.
+      return jsonResponse({
+        status: 'placeholder',
+        message: 'Excel upload tool registered. Full implementation in Part 6.',
+      });
+    } catch (e: any) { return errorResponse(e.message); }
+  }
+);
+
+// ─── Start Server ───
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('ERP Data Server running on stdio');  // CHANGE for each server
+  console.error('erp-data-server running on stdio');
 }
-
 main().catch(console.error);
