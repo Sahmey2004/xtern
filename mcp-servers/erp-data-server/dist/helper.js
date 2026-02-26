@@ -1,8 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.jsonResponse = jsonResponse;
-exports.errorResponse = errorResponse;
-function jsonResponse(data) {
+export function jsonResponse(data) {
     return {
         content: [{
                 type: 'text',
@@ -10,7 +6,7 @@ function jsonResponse(data) {
             }],
     };
 }
-function errorResponse(message) {
+export function errorResponse(message) {
     return {
         content: [{
                 type: 'text',

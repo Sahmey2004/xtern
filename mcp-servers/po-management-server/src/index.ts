@@ -8,7 +8,7 @@ import { dirname, join } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-dotenv.config({ path: join(__dirname, '../../../.env') });
+dotenv.config({ path: join(__dirname, '../../../.env'), quiet: true } as any);
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -191,7 +191,12 @@ server.tool(
       rationale,
       timestamp: new Date().toISOString(),
     });
-    if (error) throw new Error(`log_decision failed: ${error.message}`);
+
+    if (error) {
+      console.error(`log_decision database error: ${error.message}`);
+      throw new Error(`log_decision failed: ${error.message}`);
+    }
+
     return { content: [{ type: 'text' as const, text: JSON.stringify({ success: true, agent_name, run_id }) }] };
   }
 );
