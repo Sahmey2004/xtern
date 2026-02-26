@@ -1,7 +1,15 @@
--- ============================================================
--- Supply Chain PO Automation — Supabase Schema
--- Run this entire file in Supabase SQL Editor
--- ============================================================
+-- ─── CLEAN RESET (Optional/Caution) ──────────────────────────
+-- drop table if exists po_line_items         cascade;
+-- drop table if exists purchase_orders       cascade;
+-- drop table if exists decision_log          cascade;
+-- drop table if exists inventory             cascade;
+-- drop table if exists forecasts             cascade;
+-- drop table if exists supplier_products     cascade;
+-- drop table if exists products              cascade;
+-- drop table if exists suppliers             cascade;
+-- drop table if exists container_specs       cascade;
+-- drop table if exists supplier_scoring_weights cascade;
+-- drop table if exists pipeline_runs         cascade; -- Found in some environments
 
 -- ─── PRODUCTS ────────────────────────────────────────────────
 create table if not exists products (

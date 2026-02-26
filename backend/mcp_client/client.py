@@ -52,16 +52,25 @@ def call_mcp_tool(server_key: str, tool_name: str, arguments: dict) -> dict:
         raise RuntimeError(f"MCP server '{server_key}' exited {result.returncode}: {result.stderr}")
 
     # Parse the last JSON-RPC response (id: 2)
-    for line in result.stdout.strip().split('\n'):
+    stdout_lines = result.stdout.strip().split('\n')
+    for line in stdout_lines:
         try:
             msg = json.loads(line)
             if msg.get('id') == 2:
                 if 'error' in msg:
                     raise RuntimeError(f"MCP tool '{tool_name}' error: {msg['error']}")
-                content = msg.get('result', {}).get('content', [])
+                result_obj = msg.get('result', {})
+                if 'isError' in result_obj and result_obj['isError']:
+                    # Handle application-level errors (like my log_decision failure)
+                    error_msg = result_obj.get('content', [{}])[0].get('text', 'Unknown tool error')
+                    raise RuntimeError(f"MCP tool '{tool_name}' failed: {error_msg}")
+                    
+                content = result_obj.get('content', [])
                 if content and content[0].get('type') == 'text':
                     return json.loads(content[0]['text'])
         except json.JSONDecodeError:
             continue
 
+    print(f"DEBUG: MCP Server '{server_key}' stdout:\n{result.stdout}")
+    print(f"DEBUG: MCP Server '{server_key}' stderr:\n{result.stderr}")
     raise RuntimeError(f"No valid response from MCP server '{server_key}' for tool '{tool_name}'")
