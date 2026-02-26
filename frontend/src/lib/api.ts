@@ -5,20 +5,20 @@ export async function fetchHealth() {
   return res.json();
 }
 
-export async function runPipeline(skus: string[]) {
+export async function runPipeline(skus: string[], horizonMonths = 3) {
   const res = await fetch(`${BACKEND_URL}/pipeline/run`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ skus }),
+    body: JSON.stringify({ skus, horizon_months: horizonMonths, triggered_by: 'planner' }),
   });
   return res.json();
 }
 
-export async function approvePO(poNumber: string, reviewer: string, notes?: string) {
+export async function approvePO(poNumber: string, reviewer: string, notes?: string, action: 'approve' | 'reject' = 'approve') {
   const res = await fetch(`${BACKEND_URL}/pipeline/approve/${poNumber}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ reviewer, notes }),
+    body: JSON.stringify({ reviewer, notes, action }),
   });
   return res.json();
 }

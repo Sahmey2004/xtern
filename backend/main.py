@@ -1,7 +1,12 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from dotenv import load_dotenv
+from pydantic import BaseModel
+from typing import List, Optional
 import os
+import asyncio
+import json
 from pathlib import Path
 
 # Load .env from parent directory
@@ -84,8 +89,133 @@ async def data_summary():
         counts[table] = result.count
     return {'status': 'ok', 'counts': counts}
 
+@app.get("/products")
+async def get_products():
+    """Returns counts of all seeded tables."""
+    try:
+        from supabase import create_client
 
-# Should return:
-# {"status":"ok","counts":{"products":60,"suppliers":6,
-#   "supplier_products":195,"forecasts":720,"inventory":60,
-#   "container_specs":2,"supplier_scoring_weights":4}}
+        client = create_client(
+            os.getenv("NEXT_PUBLIC_SUPABASE_URL"),
+            os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+        )
+
+        tables = [
+            'products', 'suppliers', 'supplier_products',
+            'forecasts', 'inventory', 'container_specs',
+            'supplier_scoring_weights'
+        ]
+
+        counts = {}
+        for table in tables:
+            result = client.table(table).select('*', count='exact').execute()
+            counts[table] = result.count
+
+        return {
+            "status": "ok",
+            "counts": counts
+        }
+
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+
+
+# ─── REQUEST/RESPONSE MODELS ─────────────────────────────────
+
+class PipelineRunRequest(BaseModel):
+    skus: Optional[List[str]] = []
+    triggered_by: Optional[str] = 'planner'
+    horizon_months: Optional[int] = 3
+
+class ApprovalRequest(BaseModel):
+    reviewer: str
+    action: str           # 'approve' | 'reject'
+    notes: Optional[str] = None
+    line_item_overrides: Optional[List[dict]] = None
+
+
+# ─── PIPELINE ENDPOINTS ───────────────────────────────────────
+
+@app.post('/pipeline/run')
+async def run_pipeline_endpoint(request: PipelineRunRequest):
+    """
+    Triggers the multi-agent PO pipeline.
+    Runs synchronously (blocks until all 4 agents complete).
+    Returns full state including po_number and per-agent outputs.
+    """
+    try:
+        from graph.pipeline import run_pipeline
+        state = run_pipeline(
+            skus=request.skus or [],
+            triggered_by=request.triggered_by or 'planner',
+            horizon=request.horizon_months or 3,
+        )
+        return {
+            'status': 'completed' if not state.get('error') else 'error',
+            'run_id': state.get('run_id'),
+            'po_number': state.get('po_number'),
+            'po_total_usd': state.get('po_total_usd'),
+            'approval_status': state.get('approval_status'),
+            'net_requirements_count': len(state.get('net_requirements', [])),
+            'supplier_selections_count': len(state.get('supplier_selections', [])),
+            'container_plan': state.get('container_plan'),
+            'demand_rationale': state.get('demand_rationale'),
+            'supplier_rationale': state.get('supplier_rationale'),
+            'container_rationale': state.get('container_rationale'),
+            'po_rationale': state.get('po_rationale'),
+            'error': state.get('error'),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post('/pipeline/approve/{po_number}')
+async def approve_po(po_number: str, request: ApprovalRequest):
+    """
+    Approves or rejects a draft PO.
+    Human-in-the-loop gate — no PO is committed without this.
+    """
+    if request.action not in ('approve', 'reject'):
+        raise HTTPException(status_code=400, detail="action must be 'approve' or 'reject'")
+    try:
+        from mcp_client.client import call_mcp_tool
+        new_status = 'approved' if request.action == 'approve' else 'rejected'
+        result = call_mcp_tool('po', 'update_po_status', {
+            'po_number': po_number,
+            'new_status': new_status,
+            'reviewer': request.reviewer,
+            'notes': request.notes or '',
+            'line_item_overrides': request.line_item_overrides or [],
+        })
+        return {'status': 'ok', 'po_number': po_number, 'new_status': new_status, **result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get('/pipeline/pos')
+async def get_purchase_orders(status: str = 'all', limit: int = 20):
+    """Returns Purchase Orders with their line items."""
+    try:
+        from mcp_client.client import call_mcp_tool
+        result = call_mcp_tool('po', 'get_pos', {'status': status, 'limit': limit})
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get('/pipeline/logs')
+async def get_decision_logs(run_id: Optional[str] = None, po_number: Optional[str] = None, limit: int = 50):
+    """Returns decision log entries for audit trail."""
+    try:
+        from mcp_client.client import call_mcp_tool
+        args: dict = {'limit': limit}
+        if run_id: args['run_id'] = run_id
+        if po_number: args['po_number'] = po_number
+        result = call_mcp_tool('po', 'get_decision_log', args)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

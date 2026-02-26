@@ -1,132 +1,158 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-import { supabase } from './supabase.js';
-import { jsonResponse, errorResponse } from './helpers.js';
+import * as dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
-const server = new McpServer({
-  name: 'supplier-data-server',
-  version: '1.0.0',
-});
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+dotenv.config({ path: join(__dirname, '../../../.env') });
 
-// ─── Tool 1: get_suppliers_for_sku ───
-server.tool(
-  'get_suppliers_for_sku',
-  'Get all suppliers that can provide a given SKU, with their performance metrics and pricing.',
-  { sku: z.string().describe('Product SKU to find suppliers for') },
-  async ({ sku }) => {
-    try {
-      // Get product category first
-      const { data: product, error: pErr } = await supabase
-        .from('products').select('category').eq('sku', sku).single();
-      if (pErr) return errorResponse(`Product not found: ${sku}`);
-
-      // Get supplier-product mappings with supplier details
-      const { data, error } = await supabase
-        .from('supplier_products')
-        .select(`
-          unit_price, moq_override,
-          suppliers(id, name, region, lead_time_days, quality_score, delivery_performance, cost_rating)
-        `)
-        .eq('sku', sku);
-      if (error) return errorResponse(error.message);
-
-      const suppliers = data.map((row: any) => ({
-        supplier_id: row.suppliers.id,
-        name: row.suppliers.name,
-        region: row.suppliers.region,
-        lead_time_days: row.suppliers.lead_time_days,
-        quality_score: row.suppliers.quality_score,
-        delivery_performance: row.suppliers.delivery_performance,
-        cost_rating: row.suppliers.cost_rating,
-        unit_price: row.unit_price,
-        moq_override: row.moq_override,
-      }));
-
-      return jsonResponse({
-        sku,
-        category: product.category,
-        supplier_count: suppliers.length,
-        suppliers,
-      });
-    } catch (e: any) { return errorResponse(e.message); }
-  }
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// ─── Tool 2: get_scoring_weights ───
-server.tool(
-  'get_scoring_weights',
-  'Get the supplier decision matrix weights for a product category.',
-  { category: z.string().describe('Product category: filters, gaskets, engine_parts, electrical') },
-  async ({ category }) => {
-    try {
-      const { data, error } = await supabase
-        .from('supplier_scoring_weights')
-        .select('*')
-        .eq('category', category)
-        .single();
-      if (error) return errorResponse(error.message);
-      return jsonResponse(data);
-    } catch (e: any) { return errorResponse(e.message); }
-  }
-);
+const server = new McpServer({ name: 'supplier-data-server', version: '1.0.0' });
 
-// ─── Tool 3: get_supplier_history ───
-server.tool(
-  'get_supplier_history',
-  'Get past decision records involving this supplier from the decision log.',
-  { supplier_id: z.string().describe('Supplier ID, e.g. SUP-A') },
-  async ({ supplier_id }) => {
-    try {
-      const { data, error } = await supabase
-        .from('decision_log')
-        .select('*')
-        .eq('agent', 'supplier_selector')
-        .ilike('output', `%${supplier_id}%`)
-        .order('timestamp', { ascending: false })
-        .limit(20);
-      if (error) return errorResponse(error.message);
-      return jsonResponse({
-        supplier_id,
-        history_count: data.length,
-        decisions: data,
-        note: data.length === 0 ? 'No history yet. This populates as the pipeline runs.' : undefined,
-      });
-    } catch (e: any) { return errorResponse(e.message); }
-  }
-);
+server.tool('ping', 'Health check', {}, async () => ({
+  content: [{ type: 'text' as const, text: JSON.stringify({ server: 'supplier-data-server', status: 'ok', timestamp: new Date().toISOString() }) }]
+}));
 
-// ─── Tool 4: update_scoring_weights ───
+// ─── GET SUPPLIERS ───────────────────────────────────────────
 server.tool(
-  'update_scoring_weights',
-  'Update the supplier scoring weights for a category. All 4 weights must sum to 1.0.',
+  'get_suppliers',
+  'Returns all suppliers with quality, delivery, lead time, and cost scores.',
   {
-    category: z.string().describe('Product category'),
-    delivery_weight: z.number().describe('Weight for delivery performance (0-1)'),
-    quality_weight: z.number().describe('Weight for quality score (0-1)'),
-    lead_time_weight: z.number().describe('Weight for lead time (0-1)'),
-    cost_weight: z.number().describe('Weight for cost rating (0-1)'),
+    supplier_ids: z.array(z.string()).optional().describe('Filter to specific supplier IDs'),
+    region: z.string().optional().describe('Filter by region'),
   },
-  async ({ category, delivery_weight, quality_weight, lead_time_weight, cost_weight }) => {
-    try {
-      const sum = delivery_weight + quality_weight + lead_time_weight + cost_weight;
-      if (Math.abs(sum - 1.0) > 0.01) {
-        return errorResponse(`Weights must sum to 1.0. Current sum: ${sum}`);
-      }
-      const { data, error } = await supabase
-        .from('supplier_scoring_weights')
-        .update({ delivery_weight, quality_weight, lead_time_weight, cost_weight })
-        .eq('category', category)
-        .select();
-      if (error) return errorResponse(error.message);
-      return jsonResponse({ updated: true, weights: data[0] });
-    } catch (e: any) { return errorResponse(e.message); }
+  async ({ supplier_ids, region }) => {
+    let query = supabase.from('suppliers').select('*');
+    if (supplier_ids && supplier_ids.length > 0) query = query.in('id', supplier_ids);
+    if (region) query = query.eq('region', region);
+    const { data, error } = await query.order('id');
+    if (error) throw new Error(`get_suppliers failed: ${error.message}`);
+    return { content: [{ type: 'text' as const, text: JSON.stringify({ suppliers: data, count: data?.length ?? 0 }) }] };
+  }
+);
+
+// ─── GET SUPPLIER PRODUCTS ───────────────────────────────────
+server.tool(
+  'get_supplier_products',
+  'Returns supplier-product pricing mappings. Use to find which suppliers carry which SKUs and at what price.',
+  {
+    skus: z.array(z.string()).optional().describe('Filter to specific SKUs'),
+    supplier_ids: z.array(z.string()).optional().describe('Filter to specific suppliers'),
+  },
+  async ({ skus, supplier_ids }) => {
+    let query = supabase.from('supplier_products').select(`
+      *,
+      suppliers (name, region, lead_time_days, quality_score, delivery_performance, cost_rating),
+      products (name, category, moq, unit_weight_kg, unit_cbm)
+    `);
+    if (skus && skus.length > 0) query = query.in('sku', skus);
+    if (supplier_ids && supplier_ids.length > 0) query = query.in('supplier_id', supplier_ids);
+    const { data, error } = await query;
+    if (error) throw new Error(`get_supplier_products failed: ${error.message}`);
+    return { content: [{ type: 'text' as const, text: JSON.stringify({ supplier_products: data, count: data?.length ?? 0 }) }] };
+  }
+);
+
+// ─── SCORE SUPPLIERS ─────────────────────────────────────────
+server.tool(
+  'score_suppliers',
+  'Scores and ranks suppliers for a given SKU using weighted criteria (quality, delivery, lead time, cost). Returns ranked list with scores.',
+  {
+    sku: z.string().describe('The SKU to score suppliers for'),
+    order_qty: z.number().positive().describe('Planned order quantity'),
+  },
+  async ({ sku, order_qty }) => {
+    // Get product category to find weights
+    const { data: product } = await supabase.from('products').select('category, moq').eq('sku', sku).single();
+    const category = product?.category ?? 'filters';
+    const moq = product?.moq ?? 1;
+
+    // Get scoring weights for this category
+    const { data: weights } = await supabase
+      .from('supplier_scoring_weights')
+      .select('*')
+      .eq('category', category)
+      .single();
+
+    const w = weights ?? { delivery_weight: 0.25, quality_weight: 0.35, lead_time_weight: 0.15, cost_weight: 0.25 };
+
+    // Get all suppliers for this SKU
+    const { data: mappings, error } = await supabase
+      .from('supplier_products')
+      .select('*, suppliers(*)')
+      .eq('sku', sku);
+
+    if (error) throw new Error(`score_suppliers failed: ${error.message}`);
+    if (!mappings || mappings.length === 0) {
+      return { content: [{ type: 'text' as const, text: JSON.stringify({ error: 'No suppliers found for SKU', sku }) }] };
+    }
+
+    // Score each supplier (all scores 0–100, higher = better)
+    const scored = mappings.map((m: any) => {
+      const sup = m.suppliers;
+      // Lead time: 7 days = 100, 28 days = 0
+      const leadTimeScore = Math.max(0, 100 - (sup.lead_time_days - 7) * (100 / 21));
+      // Cost: cost_rating is already 0–100 (higher = cheaper)
+      const costScore = sup.cost_rating;
+      // MOQ fit: actual moq vs order qty — if order_qty >= moq, perfect (100), else penalise
+      const effectiveMoq = m.moq_override ?? moq;
+      const moqFit = order_qty >= effectiveMoq ? 100 : (order_qty / effectiveMoq) * 100;
+
+      const totalScore = (
+        sup.quality_score        * w.quality_weight +
+        sup.delivery_performance * w.delivery_weight +
+        leadTimeScore            * w.lead_time_weight +
+        costScore                * w.cost_weight
+      );
+
+      return {
+        supplier_id: sup.id,
+        supplier_name: sup.name,
+        region: sup.region,
+        lead_time_days: sup.lead_time_days,
+        unit_price: m.unit_price,
+        moq: effectiveMoq,
+        moq_fit_pct: Math.round(moqFit),
+        score: Math.round(totalScore * 10) / 10,
+        score_breakdown: {
+          quality: sup.quality_score,
+          delivery: sup.delivery_performance,
+          lead_time: Math.round(leadTimeScore),
+          cost: costScore,
+        },
+        weights_used: w,
+      };
+    });
+
+    scored.sort((a: any, b: any) => b.score - a.score);
+    const recommended = scored[0];
+
+    return {
+      content: [{
+        type: 'text' as const,
+        text: JSON.stringify({
+          sku,
+          category,
+          order_qty,
+          ranked_suppliers: scored,
+          recommended_supplier: recommended,
+        })
+      }]
+    };
   }
 );
 
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('supplier-data-server running on stdio');
+  console.error('Supplier Data Server running on stdio');
 }
 main().catch(console.error);

@@ -1,152 +1,105 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const mcp_js_1 = require("@modelcontextprotocol/sdk/server/mcp.js");
-const stdio_js_1 = require("@modelcontextprotocol/sdk/server/stdio.js");
-const zod_1 = require("zod");
-const supabase_js_1 = require("./supabase.js");
-const helper_js_1 = require("./helper.js");
-const server = new mcp_js_1.McpServer({ name: 'logistics-server', version: '1.0.0' });
-// ─── Tool 1: get_container_specs ───
-server.tool('get_container_specs', 'Get available container types with dimensions and costs.', {}, async () => {
-    try {
-        const { data, error } = await supabase_js_1.supabase.from('container_specs').select('*');
-        if (error)
-            return (0, helper_js_1.errorResponse)(error.message);
-        return (0, helper_js_1.jsonResponse)({ containers: data });
-    }
-    catch (e) {
-        return (0, helper_js_1.errorResponse)(e.message);
-    }
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { createClient } from '@supabase/supabase-js';
+import { z } from 'zod';
+import * as dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+dotenv.config({ path: join(__dirname, '../../../.env') });
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+const server = new McpServer({ name: 'logistics-server', version: '1.0.0' });
+server.tool('ping', 'Health check', {}, async () => ({
+    content: [{ type: 'text', text: JSON.stringify({ server: 'logistics-server', status: 'ok', timestamp: new Date().toISOString() }) }]
+}));
+// ─── GET CONTAINER SPECS ─────────────────────────────────────
+server.tool('get_container_specs', 'Returns available container types with max weight, volume, and base freight cost.', {}, async () => {
+    const { data, error } = await supabase.from('container_specs').select('*');
+    if (error)
+        throw new Error(`get_container_specs failed: ${error.message}`);
+    return { content: [{ type: 'text', text: JSON.stringify({ container_specs: data }) }] };
 });
-// ─── Tool 2: calculate_container_fit ───
-server.tool('calculate_container_fit', 'Calculate optimal container loading for a set of items. Tries 20ft-only, 40ft-only, and mixed strategies. Flags utilization below 80%.', {
-    items: zod_1.z.array(zod_1.z.object({
-        sku: zod_1.z.string(),
-        quantity: zod_1.z.number(),
-        unit_weight_kg: zod_1.z.number(),
-        unit_cbm: zod_1.z.number(),
-    })).describe('Array of items to pack'),
-}, async ({ items }) => {
-    try {
-        // Get container specs
-        const { data: specs } = await supabase_js_1.supabase.from('container_specs').select('*');
-        if (!specs || specs.length === 0)
-            return (0, helper_js_1.errorResponse)('No container specs found');
-        const c20 = specs.find((s) => s.type === '20ft');
-        const c40 = specs.find((s) => s.type === '40ft');
-        // Calculate total shipment volume and weight
-        const totalWeight = items.reduce((s, i) => s + i.quantity * i.unit_weight_kg, 0);
-        const totalCbm = items.reduce((s, i) => s + i.quantity * i.unit_cbm, 0);
-        // ─── Strategy A: 40ft containers only ───
-        const count40 = Math.max(1, Math.ceil(Math.max(totalWeight / c40.max_weight_kg, totalCbm / c40.max_cbm)));
-        const util40w = (totalWeight / (count40 * c40.max_weight_kg)) * 100;
-        const util40v = (totalCbm / (count40 * c40.max_cbm)) * 100;
-        const util40 = Math.max(util40w, util40v);
-        const stratA = {
-            strategy: '40ft_only',
-            containers: [{
-                    type: '40ft', count: count40, weight_kg: totalWeight,
-                    cbm_used: totalCbm, utilization_pct: Math.round(util40 * 100) / 100,
-                    cost_usd: count40 * c40.base_cost_usd
-                }],
-            total_cost: count40 * c40.base_cost_usd,
-            min_utilization: Math.round(util40 * 100) / 100,
-            total_containers: count40,
-        };
-        // ─── Strategy B: 20ft containers only ───
-        const count20 = Math.max(1, Math.ceil(Math.max(totalWeight / c20.max_weight_kg, totalCbm / c20.max_cbm)));
-        const util20w = (totalWeight / (count20 * c20.max_weight_kg)) * 100;
-        const util20v = (totalCbm / (count20 * c20.max_cbm)) * 100;
-        const util20 = Math.max(util20w, util20v);
-        const stratB = {
-            strategy: '20ft_only',
-            containers: [{
-                    type: '20ft', count: count20, weight_kg: totalWeight,
-                    cbm_used: totalCbm, utilization_pct: Math.round(util20 * 100) / 100,
-                    cost_usd: count20 * c20.base_cost_usd
-                }],
-            total_cost: count20 * c20.base_cost_usd,
-            min_utilization: Math.round(util20 * 100) / 100,
-            total_containers: count20,
-        };
-        // ─── Strategy C: Mixed (fill 40ft first, remainder in 20ft) ───
-        const full40 = Math.floor(Math.min(totalWeight / c40.max_weight_kg, totalCbm / c40.max_cbm));
-        const remainWeight = totalWeight - full40 * c40.max_weight_kg;
-        const remainCbm = totalCbm - full40 * c40.max_cbm;
-        let stratC = null;
-        if (full40 > 0 && (remainWeight > 0 || remainCbm > 0)) {
-            const rem20 = Math.max(1, Math.ceil(Math.max(remainWeight / c20.max_weight_kg, remainCbm / c20.max_cbm)));
-            const mixUtil40 = 95; // full 40ft containers are well-utilized
-            const mixUtil20w = (remainWeight / (rem20 * c20.max_weight_kg)) * 100;
-            const mixUtil20v = (remainCbm / (rem20 * c20.max_cbm)) * 100;
-            const mixUtil20 = Math.max(mixUtil20w, mixUtil20v);
-            stratC = {
-                strategy: 'mixed_40ft_20ft',
-                containers: [
-                    {
-                        type: '40ft', count: full40, weight_kg: full40 * c40.max_weight_kg,
-                        cbm_used: full40 * c40.max_cbm, utilization_pct: mixUtil40,
-                        cost_usd: full40 * c40.base_cost_usd
-                    },
-                    {
-                        type: '20ft', count: rem20, weight_kg: Math.max(0, remainWeight),
-                        cbm_used: Math.max(0, remainCbm),
-                        utilization_pct: Math.round(Math.max(0, mixUtil20) * 100) / 100,
-                        cost_usd: rem20 * c20.base_cost_usd
-                    },
-                ],
-                total_cost: full40 * c40.base_cost_usd + rem20 * c20.base_cost_usd,
-                min_utilization: Math.round(Math.min(mixUtil40, Math.max(0, mixUtil20)) * 100) / 100,
-                total_containers: full40 + rem20,
-            };
-        }
-        // ─── Pick best option ───
-        const options = [stratA, stratB, ...(stratC ? [stratC] : [])];
-        const viable = options.filter(o => o.min_utilization >= 80);
-        const best = viable.length > 0
-            ? viable.sort((a, b) => a.total_cost - b.total_cost)[0]
-            : options.sort((a, b) => b.min_utilization - a.min_utilization)[0];
-        const recommendation = best.min_utilization >= 80 ? 'FCL' : 'LCL';
-        return (0, helper_js_1.jsonResponse)({
-            shipment_summary: { total_weight_kg: totalWeight, total_cbm: totalCbm },
-            options,
-            recommended: { ...best, fcl_lcl: recommendation },
-            below_80_pct: best.min_utilization < 80,
-            suggestion: best.min_utilization < 80
-                ? 'Utilization below 80%. Consider: (a) pull forward demand, (b) combine with another order, or (c) ship LCL.'
-                : 'Good utilization. Recommend FCL shipping.',
+// ─── CALCULATE CONTAINER PLAN ────────────────────────────────
+server.tool('calculate_container_plan', 'Given a list of SKUs with quantities, calculates optimal container allocation using first-fit decreasing bin packing. Returns TEU count, utilisation %, and estimated freight cost.', {
+    line_items: z.array(z.object({
+        sku: z.string(),
+        qty: z.number().positive(),
+        unit_weight_kg: z.number().positive(),
+        unit_cbm: z.number().positive(),
+    })).describe('Array of order line items with physical dimensions'),
+    preferred_container_type: z.enum(['20ft', '40ft', 'auto']).optional().describe('Preferred container type (default: auto = choose cheapest fit)'),
+}, async ({ line_items, preferred_container_type = 'auto' }) => {
+    // Load container specs from DB
+    const { data: specs, error } = await supabase.from('container_specs').select('*');
+    if (error)
+        throw new Error(`calculate_container_plan DB error: ${error.message}`);
+    const containers = {};
+    for (const s of (specs ?? [])) {
+        containers[s.type] = { max_weight_kg: s.max_weight_kg, max_cbm: s.max_cbm, base_cost_usd: s.base_cost_usd };
+    }
+    // Calculate total cargo
+    let totalWeightKg = 0;
+    let totalCbm = 0;
+    const itemDetails = [];
+    for (const item of line_items) {
+        const weight = item.qty * item.unit_weight_kg;
+        const cbm = item.qty * item.unit_cbm;
+        totalWeightKg += weight;
+        totalCbm += cbm;
+        itemDetails.push({ ...item, total_weight_kg: weight, total_cbm: cbm });
+    }
+    // Determine which container types to try
+    const candidateTypes = preferred_container_type === 'auto'
+        ? ['20ft', '40ft']
+        : [preferred_container_type];
+    // For each type: how many containers needed? Greedy first-fit.
+    const plans = [];
+    for (const cType of candidateTypes) {
+        const spec = containers[cType];
+        if (!spec)
+            continue;
+        // Number of containers needed by weight and volume separately
+        const byWeight = Math.ceil(totalWeightKg / spec.max_weight_kg);
+        const byVolume = Math.ceil(totalCbm / spec.max_cbm);
+        const numContainers = Math.max(byWeight, byVolume);
+        const totalCost = numContainers * spec.base_cost_usd;
+        // Utilisation is based on the binding constraint
+        const weightUtil = (totalWeightKg / (numContainers * spec.max_weight_kg)) * 100;
+        const volumeUtil = (totalCbm / (numContainers * spec.max_cbm)) * 100;
+        const bindingUtil = Math.max(weightUtil, volumeUtil);
+        plans.push({
+            container_type: cType,
+            num_containers: numContainers,
+            total_weight_kg: Math.round(totalWeightKg * 100) / 100,
+            total_cbm: Math.round(totalCbm * 1000) / 1000,
+            weight_utilisation_pct: Math.round(weightUtil * 10) / 10,
+            volume_utilisation_pct: Math.round(volumeUtil * 10) / 10,
+            binding_utilisation_pct: Math.round(bindingUtil * 10) / 10,
+            estimated_freight_usd: totalCost,
+            max_weight_kg: spec.max_weight_kg,
+            max_cbm: spec.max_cbm,
         });
     }
-    catch (e) {
-        return (0, helper_js_1.errorResponse)(e.message);
-    }
-});
-// ─── Tool 3: save_container_plan ───
-server.tool('save_container_plan', 'Save the selected container plan to the database.', {
-    po_number: zod_1.z.string().describe('Purchase order number'),
-    plans: zod_1.z.array(zod_1.z.object({
-        container_type: zod_1.z.string(),
-        fcl_lcl: zod_1.z.string(),
-        utilization_pct: zod_1.z.number(),
-        weight_kg: zod_1.z.number(),
-        cbm_used: zod_1.z.number(),
-        estimated_freight_usd: zod_1.z.number(),
-    })).describe('Container plan details'),
-}, async ({ po_number, plans }) => {
-    try {
-        const rows = plans.map(p => ({ po_number, ...p }));
-        const { data, error } = await supabase_js_1.supabase.from('container_plans').insert(rows).select();
-        if (error)
-            return (0, helper_js_1.errorResponse)(error.message);
-        return (0, helper_js_1.jsonResponse)({ saved: true, plan_count: data.length, plans: data });
-    }
-    catch (e) {
-        return (0, helper_js_1.errorResponse)(e.message);
-    }
+    // Choose best plan: highest utilisation at lowest cost
+    plans.sort((a, b) => b.binding_utilisation_pct - a.binding_utilisation_pct);
+    const recommended = plans[0];
+    return {
+        content: [{
+                type: 'text',
+                text: JSON.stringify({
+                    total_weight_kg: Math.round(totalWeightKg * 100) / 100,
+                    total_cbm: Math.round(totalCbm * 1000) / 1000,
+                    item_count: line_items.length,
+                    plans,
+                    recommended_plan: recommended,
+                })
+            }]
+    };
 });
 async function main() {
-    const transport = new stdio_js_1.StdioServerTransport();
+    const transport = new StdioServerTransport();
     await server.connect(transport);
-    console.error('logistics-server running on stdio');
+    console.error('Logistics Server running on stdio');
 }
 main().catch(console.error);

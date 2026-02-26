@@ -1,207 +1,225 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-import { supabase } from './supabase.js';
-import { jsonResponse, errorResponse } from './helpers.js';
+import * as dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+dotenv.config({ path: join(__dirname, '../../../.env') });
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 const server = new McpServer({ name: 'po-management-server', version: '1.0.0' });
 
-// ─── Helper: generate PO number ───
-function generatePONumber(): string {
-  const d = new Date();
-  const date = d.toISOString().slice(0, 10).replace(/-/g, '');
-  const rand = Math.floor(Math.random() * 900) + 100;
-  return `PO-${date}-${rand}`;
-}
+server.tool('ping', 'Health check', {}, async () => ({
+  content: [{ type: 'text' as const, text: JSON.stringify({ server: 'po-management-server', status: 'ok', timestamp: new Date().toISOString() }) }]
+}));
 
-// ─── Tool 1: create_draft_po ───
+// ─── CREATE DRAFT PO ─────────────────────────────────────────
 server.tool(
   'create_draft_po',
-  'Create a new Purchase Order in draft status with line items.',
+  'Creates a draft Purchase Order with line items in Supabase. Returns the PO number.',
   {
-    supplier_id: z.string(),
-    run_id: z.string().optional(),
-    order_date: z.string().describe('ISO date string'),
-    expected_delivery: z.string().describe('ISO date string'),
+    run_id: z.string().describe('The pipeline run ID'),
+    created_by: z.string().optional().describe('User who triggered the run'),
     line_items: z.array(z.object({
       sku: z.string(),
-      quantity: z.number(),
-      unit_price: z.number(),
-    })),
-  },
-  async ({ supplier_id, run_id, order_date, expected_delivery, line_items }) => {
-    try {
-      const po_number = generatePONumber();
-      const total_value = line_items.reduce((s, i) => s + i.quantity * i.unit_price, 0);
-
-      // Insert PO header
-      const { error: poErr } = await supabase.from('purchase_orders').insert({
-        po_number, supplier_id, run_id: run_id || null, status: 'draft',
-        total_value: Math.round(total_value * 100) / 100,
-        order_date, expected_delivery,
-      });
-      if (poErr) return errorResponse(poErr.message);
-
-      // Insert line items
-      const rows = line_items.map(i => ({
-        po_number, sku: i.sku, quantity: i.quantity,
-        unit_price: i.unit_price,
-        line_total: Math.round(i.quantity * i.unit_price * 100) / 100,
-      }));
-      const { error: liErr } = await supabase.from('po_line_items').insert(rows);
-      if (liErr) return errorResponse(liErr.message);
-
-      return jsonResponse({
-        po_number, status: 'draft', supplier_id, total_value,
-        line_item_count: rows.length,
-      });
-    } catch (e: any) { return errorResponse(e.message); }
-  }
-);
-
-// ─── Tool 2: submit_for_approval ───
-server.tool(
-  'submit_for_approval',
-  'Move a draft PO to pending_approval and create an approval queue entry.',
-  { po_number: z.string() },
-  async ({ po_number }) => {
-    try {
-      const { error: upErr } = await supabase
-        .from('purchase_orders')
-        .update({ status: 'pending_approval' })
-        .eq('po_number', po_number);
-      if (upErr) return errorResponse(upErr.message);
-
-      const { error: aqErr } = await supabase
-        .from('approval_queue')
-        .insert({ po_number, status: 'pending' });
-      if (aqErr) return errorResponse(aqErr.message);
-
-      return jsonResponse({ po_number, status: 'pending_approval' });
-    } catch (e: any) { return errorResponse(e.message); }
-  }
-);
-
-// ─── Tool 3: get_approval_queue ───
-server.tool(
-  'get_approval_queue',
-  'Get all POs awaiting approval with details.',
-  {},
-  async () => {
-    try {
-      const { data, error } = await supabase
-        .from('approval_queue')
-        .select(`
-          *,
-          purchase_orders(po_number, supplier_id, total_value, order_date, expected_delivery,
-            suppliers(name, region))
-        `)
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false });
-      if (error) return errorResponse(error.message);
-      return jsonResponse({ pending_count: data.length, queue: data });
-    } catch (e: any) { return errorResponse(e.message); }
-  }
-);
-
-// ─── Tool 4: approve_po ───
-server.tool(
-  'approve_po',
-  'Approve a pending Purchase Order.',
-  {
-    po_number: z.string(),
-    reviewer: z.string(),
+      supplier_id: z.string(),
+      qty_ordered: z.number().positive(),
+      unit_price: z.number().positive(),
+      rationale: z.string().optional(),
+    })).describe('Line items for this PO'),
+    container_plan: z.object({
+      container_type: z.string(),
+      num_containers: z.number(),
+      total_weight_kg: z.number(),
+      total_cbm: z.number(),
+      binding_utilisation_pct: z.number(),
+      estimated_freight_usd: z.number(),
+    }).optional().describe('Container plan from logistics agent'),
     notes: z.string().optional(),
   },
-  async ({ po_number, reviewer, notes }) => {
-    try {
-      const now = new Date().toISOString();
-      await supabase.from('purchase_orders')
-        .update({ status: 'approved', approved_by: reviewer, approved_at: now })
-        .eq('po_number', po_number);
-      await supabase.from('approval_queue')
-        .update({ status: 'approved', reviewer, notes, decided_at: now })
-        .eq('po_number', po_number);
-      return jsonResponse({ po_number, status: 'approved', reviewer });
-    } catch (e: any) { return errorResponse(e.message); }
+  async ({ run_id, created_by = 'system', line_items, container_plan, notes }) => {
+    // Generate PO number: PO-YYYYMMDD-XXXX
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const suffix = Math.floor(1000 + Math.random() * 9000);
+    const po_number = `PO-${dateStr}-${suffix}`;
+
+    // Calculate total
+    const total_usd = line_items.reduce((sum, item) => sum + item.qty_ordered * item.unit_price, 0);
+
+    // Insert PO header
+    const { error: poError } = await supabase.from('purchase_orders').insert({
+      po_number,
+      status: 'draft',
+      created_by,
+      run_id,
+      total_usd: Math.round(total_usd * 100) / 100,
+      container_plan: container_plan ?? null,
+      notes: notes ?? null,
+    });
+    if (poError) throw new Error(`create_draft_po insert failed: ${poError.message}`);
+
+    // Insert line items
+    const lineRows = line_items.map(item => ({
+      po_number,
+      sku: item.sku,
+      supplier_id: item.supplier_id,
+      qty_ordered: item.qty_ordered,
+      unit_price: item.unit_price,
+      rationale: item.rationale ?? null,
+    }));
+    const { error: lineError } = await supabase.from('po_line_items').insert(lineRows);
+    if (lineError) throw new Error(`create_draft_po line items failed: ${lineError.message}`);
+
+    return {
+      content: [{
+        type: 'text' as const,
+        text: JSON.stringify({
+          success: true,
+          po_number,
+          status: 'draft',
+          total_usd: Math.round(total_usd * 100) / 100,
+          line_item_count: line_items.length,
+        })
+      }]
+    };
   }
 );
 
-// ─── Tool 5: reject_po ───
+// ─── GET POs ─────────────────────────────────────────────────
 server.tool(
-  'reject_po',
-  'Reject a pending Purchase Order with a reason.',
+  'get_pos',
+  'Returns Purchase Orders, optionally filtered by status. Includes line items.',
   {
-    po_number: z.string(),
-    reviewer: z.string(),
-    reason: z.string(),
+    status: z.enum(['draft', 'pending_approval', 'approved', 'rejected', 'all']).optional().describe('Filter by status (default: all)'),
+    run_id: z.string().optional().describe('Filter by pipeline run ID'),
+    limit: z.number().min(1).max(50).optional().describe('Max results (default 20)'),
   },
-  async ({ po_number, reviewer, reason }) => {
-    try {
-      const now = new Date().toISOString();
-      await supabase.from('purchase_orders')
-        .update({ status: 'rejected', rejection_reason: reason })
-        .eq('po_number', po_number);
-      await supabase.from('approval_queue')
-        .update({ status: 'rejected', reviewer, notes: reason, decided_at: now })
-        .eq('po_number', po_number);
-      return jsonResponse({ po_number, status: 'rejected', reason });
-    } catch (e: any) { return errorResponse(e.message); }
+  async ({ status, run_id, limit = 20 }) => {
+    let query = supabase.from('purchase_orders').select(`
+      *,
+      po_line_items (sku, supplier_id, qty_ordered, unit_price, total_price, rationale)
+    `);
+    if (status && status !== 'all') query = query.eq('status', status);
+    if (run_id) query = query.eq('run_id', run_id);
+    const { data, error } = await query.order('created_at', { ascending: false }).limit(limit);
+    if (error) throw new Error(`get_pos failed: ${error.message}`);
+    return { content: [{ type: 'text' as const, text: JSON.stringify({ purchase_orders: data, count: data?.length ?? 0 }) }] };
   }
 );
 
-// ─── Tool 6: modify_po ───
+// ─── UPDATE PO STATUS ─────────────────────────────────────────
 server.tool(
-  'modify_po',
-  'Apply modifications from human reviewer to a PO (quantity changes, supplier override).',
+  'update_po_status',
+  'Updates a Purchase Order status. Use for approval, rejection, or submission for review.',
   {
-    po_number: z.string(),
-    reviewer: z.string(),
-    modifications: z.record(z.string(), z.any()).describe('JSON object with changes'),
+    po_number: z.string().describe('The PO number to update'),
+    new_status: z.enum(['pending_approval', 'approved', 'rejected']).describe('New status'),
+    reviewer: z.string().optional().describe('Name of the person taking action'),
+    notes: z.string().optional().describe('Reviewer notes or rejection reason'),
+    line_item_overrides: z.array(z.object({
+      sku: z.string(),
+      new_qty: z.number().positive(),
+    })).optional().describe('Planner quantity overrides before submission'),
   },
-  async ({ po_number, reviewer, modifications }) => {
-    try {
-      const now = new Date().toISOString();
-      await supabase.from('approval_queue')
-        .update({ status: 'modified', reviewer, modifications, decided_at: now })
+  async ({ po_number, new_status, reviewer, notes, line_item_overrides }) => {
+    const updateData: any = { status: new_status };
+    if (new_status === 'approved' || new_status === 'rejected') {
+      updateData.approved_by = reviewer ?? 'unknown';
+      updateData.approved_at = new Date().toISOString();
+    }
+    if (notes) updateData.notes = notes;
+
+    // Apply any line item quantity overrides
+    if (line_item_overrides && line_item_overrides.length > 0) {
+      for (const override of line_item_overrides) {
+        await supabase
+          .from('po_line_items')
+          .update({ qty_ordered: override.new_qty })
+          .eq('po_number', po_number)
+          .eq('sku', override.sku);
+      }
+      // Recalculate total
+      const { data: lines } = await supabase
+        .from('po_line_items')
+        .select('qty_ordered, unit_price')
         .eq('po_number', po_number);
-      await supabase.from('purchase_orders')
-        .update({ status: 'draft' })  // Back to draft for re-processing
-        .eq('po_number', po_number);
-      return jsonResponse({ po_number, status: 'modified', modifications });
-    } catch (e: any) { return errorResponse(e.message); }
+      const newTotal = (lines ?? []).reduce((sum, l: any) => sum + l.qty_ordered * l.unit_price, 0);
+      updateData.total_usd = Math.round(newTotal * 100) / 100;
+    }
+
+    const { error } = await supabase.from('purchase_orders').update(updateData).eq('po_number', po_number);
+    if (error) throw new Error(`update_po_status failed: ${error.message}`);
+
+    return {
+      content: [{
+        type: 'text' as const,
+        text: JSON.stringify({ success: true, po_number, new_status, reviewer, timestamp: new Date().toISOString() })
+      }]
+    };
   }
 );
 
-// ─── Tool 7: log_decision ───
+// ─── LOG DECISION ─────────────────────────────────────────────
 server.tool(
   'log_decision',
-  'Write a traceability record to the decision log. Called by all 4 agents after every action.',
+  'Writes an agent decision record to the audit log in Supabase.',
   {
-    agent: z.string().describe('Agent name: demand_analyst, supplier_selector, container_optimizer, po_compiler'),
-    action: z.string().describe('What action was performed'),
-    run_id: z.string().optional(),
-    inputs: z.record(z.string(), z.any()).optional(),
-    output: z.record(z.string(), z.any()).optional(),
-    confidence: z.number().optional().describe('0 to 1'),
-    rationale: z.string().optional(),
+    run_id: z.string().describe('Pipeline run ID'),
+    agent_name: z.string().describe('Name of the agent making this decision'),
+    inputs: z.record(z.string(), z.unknown()).describe('Inputs the agent received'),
+    output: z.record(z.string(), z.unknown()).describe('Agent output / decision'),
+    confidence: z.number().min(0).max(1).optional().describe('Confidence score 0–1'),
+    rationale: z.string().describe('Human-readable explanation of the decision'),
+    po_number: z.string().optional().describe('Associated PO number if applicable'),
   },
-  async ({ agent, action, run_id, inputs, output, confidence, rationale }) => {
-    try {
-      const { data, error } = await supabase.from('decision_log').insert({
-        agent, action, run_id: run_id || null,
-        inputs: inputs || {}, output: output || {},
-        confidence: confidence || null, rationale: rationale || null,
-      }).select();
-      if (error) return errorResponse(error.message);
-      return jsonResponse({ logged: true, decision_id: data[0].id });
-    } catch (e: any) { return errorResponse(e.message); }
+  async ({ run_id, agent_name, inputs, output, confidence, rationale, po_number }) => {
+    const { error } = await supabase.from('decision_log').insert({
+      run_id,
+      agent_name,
+      po_number: po_number ?? null,
+      inputs,
+      output,
+      confidence: confidence ?? null,
+      rationale,
+      timestamp: new Date().toISOString(),
+    });
+    if (error) throw new Error(`log_decision failed: ${error.message}`);
+    return { content: [{ type: 'text' as const, text: JSON.stringify({ success: true, agent_name, run_id }) }] };
+  }
+);
+
+// ─── GET DECISION LOG ────────────────────────────────────────
+server.tool(
+  'get_decision_log',
+  'Returns decision log entries for a run or PO.',
+  {
+    run_id: z.string().optional().describe('Filter by pipeline run ID'),
+    po_number: z.string().optional().describe('Filter by PO number'),
+    agent_name: z.string().optional().describe('Filter by agent name'),
+    limit: z.number().min(1).max(100).optional().describe('Max results (default 50)'),
+  },
+  async ({ run_id, po_number, agent_name, limit = 50 }) => {
+    let query = supabase.from('decision_log').select('*');
+    if (run_id) query = query.eq('run_id', run_id);
+    if (po_number) query = query.eq('po_number', po_number);
+    if (agent_name) query = query.eq('agent_name', agent_name);
+    const { data, error } = await query.order('timestamp', { ascending: true }).limit(limit);
+    if (error) throw new Error(`get_decision_log failed: ${error.message}`);
+    return { content: [{ type: 'text' as const, text: JSON.stringify({ entries: data, count: data?.length ?? 0 }) }] };
   }
 );
 
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('po-management-server running on stdio');
+  console.error('PO Management Server running on stdio');
 }
 main().catch(console.error);
