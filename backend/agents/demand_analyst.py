@@ -7,29 +7,15 @@ Agent 1: Demand Analyst
 """
 import uuid
 import json
-import os
-from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
+from agents.llm_config import get_llm, update_agent_activity
 from mcp_client.client import call_mcp_tool
 from graph.state import PipelineState
 
 
-def get_llm():
-    return ChatOpenAI(
-        model='meta-llama/llama-3.1-8b-instruct:free',
-        openai_api_key=os.getenv('OPENROUTER_API_KEY'),
-        openai_api_base='https://openrouter.ai/api/v1',
-        max_tokens=1024,
-        temperature=0.1,
-        default_headers={
-            'HTTP-Referer': 'http://localhost:3000',
-            'X-Title': 'Supply Chain PO Automation',
-        }
-    )
-
-
 def demand_analyst_node(state: PipelineState) -> PipelineState:
     """LangGraph node: calculates net requirements for each SKU."""
+    agent_name = 'DemandAnalyst'
     run_id = state.get('run_id', str(uuid.uuid4()))
     skus_requested = state.get('skus_to_plan', [])
     horizon = state.get('planning_horizon_months', 3)
@@ -41,19 +27,65 @@ def demand_analyst_node(state: PipelineState) -> PipelineState:
     else:
         inv_args['below_reorder_only'] = True
 
-    inv_data = call_mcp_tool('erp', 'get_inventory', inv_args)
+    try:
+        inv_data = call_mcp_tool('erp', 'get_inventory', inv_args)
+    except Exception as exc:
+        error_message = f'{agent_name} could not load inventory data: {exc}'
+        return {
+            **state,
+            'run_id': run_id,
+            'current_agent': 'demand_analyst',
+            'error': error_message,
+            'agent_activity': update_agent_activity(
+                state,
+                agent_name,
+                status='failed',
+                summary=error_message,
+                details={'requested_skus': skus_requested, 'horizon_months': horizon},
+            ),
+        }
     inventory = inv_data.get('inventory', [])
 
     if not inventory:
-        return {**state, 'error': 'No inventory records found — run seed_data.py first', 'current_agent': 'demand_analyst'}
+        error_message = 'No inventory records found — run seed_data.py first'
+        return {
+            **state,
+            'error': error_message,
+            'current_agent': 'demand_analyst',
+            'agent_activity': update_agent_activity(
+                state,
+                agent_name,
+                status='failed',
+                summary=error_message,
+                details={'inventory_count': 0, 'requested_skus': skus_requested, 'horizon_months': horizon},
+            ),
+        }
 
     skus = [r['sku'] for r in inventory]
 
     # ── Step 2: Pull forecasts ────────────────────────────────
-    forecast_data = call_mcp_tool('erp', 'get_forecasts', {
-        'skus': skus,
-        'months_ahead': horizon,
-    })
+    try:
+        forecast_data = call_mcp_tool('erp', 'get_forecasts', {
+            'skus': skus,
+            'months_ahead': horizon,
+        })
+    except Exception as exc:
+        error_message = f'{agent_name} could not load forecast data: {exc}'
+        return {
+            **state,
+            'run_id': run_id,
+            'inventory_snapshot': inventory,
+            'skus_to_plan': skus,
+            'current_agent': 'demand_analyst',
+            'error': error_message,
+            'agent_activity': update_agent_activity(
+                state,
+                agent_name,
+                status='failed',
+                summary=error_message,
+                details={'inventory_count': len(inventory), 'horizon_months': horizon},
+            ),
+        }
     forecast_summary = forecast_data.get('summary_by_sku', [])
     forecast_by_sku = {f['sku']: f['total_forecast'] for f in forecast_summary}
 
@@ -89,7 +121,6 @@ def demand_analyst_node(state: PipelineState) -> PipelineState:
             })
 
     # ── Step 4: LLM validation and rationale ─────────────────
-    llm = get_llm()
     prompt = f"""You are a demand planning analyst. Review these net replenishment calculations and provide a brief rationale and confidence score.
 
 Net Requirements (top 5 shown):
@@ -100,20 +131,74 @@ Planning horizon: {horizon} months
 
 Respond in JSON format ONLY:
 {{"rationale": "...", "confidence": 0.0_to_1.0, "flags": ["any concerns"]}}"""
+    llm_error = None
+    llm_used = False
+    try:
+        llm = get_llm(max_tokens=1024, temperature=0.1)
+        response = llm.invoke([SystemMessage(content='You are a supply chain analyst. Respond only with valid JSON.'), HumanMessage(content=prompt)])
+        llm_used = True
+    except RuntimeError as exc:
+        error_message = f'{agent_name} could not reach OpenRouter: {exc}'
+        return {
+            **state,
+            'run_id': run_id,
+            'inventory_snapshot': inventory,
+            'forecast_summary': forecast_summary,
+            'net_requirements': net_requirements,
+            'skus_to_plan': skus,
+            'current_agent': 'demand_analyst',
+            'error': error_message,
+            'agent_activity': update_agent_activity(
+                state,
+                agent_name,
+                status='failed',
+                summary=error_message,
+                llm_error=str(exc),
+                details={
+                    'inventory_count': len(inventory),
+                    'net_requirements_count': len(net_requirements),
+                    'horizon_months': horizon,
+                },
+            ),
+        }
+    except Exception as exc:
+        error_message = f'{agent_name} OpenRouter request failed: {exc}'
+        return {
+            **state,
+            'run_id': run_id,
+            'inventory_snapshot': inventory,
+            'forecast_summary': forecast_summary,
+            'net_requirements': net_requirements,
+            'skus_to_plan': skus,
+            'current_agent': 'demand_analyst',
+            'error': error_message,
+            'agent_activity': update_agent_activity(
+                state,
+                agent_name,
+                status='failed',
+                summary=error_message,
+                llm_error=str(exc),
+                details={
+                    'inventory_count': len(inventory),
+                    'net_requirements_count': len(net_requirements),
+                    'horizon_months': horizon,
+                },
+            ),
+        }
 
     try:
-        response = llm.invoke([SystemMessage(content='You are a supply chain analyst. Respond only with valid JSON.'), HumanMessage(content=prompt)])
         parsed = json.loads(response.content.strip().strip('```json').strip('```'))
         rationale = parsed.get('rationale', 'Demand calculated from forecast minus available stock.')
         confidence = float(parsed.get('confidence', 0.85))
-    except Exception:
+    except Exception as exc:
+        llm_error = f'OpenRouter response parse failed: {exc}'
         rationale = f'Net requirements calculated: {len(net_requirements)} SKUs need replenishment across {horizon}-month horizon.'
         confidence = 0.85
 
     # ── Step 5: Log decision ──────────────────────────────────
     call_mcp_tool('po', 'log_decision', {
         'run_id': run_id,
-        'agent_name': 'DemandAnalyst',
+        'agent_name': agent_name,
         'inputs': {'skus_requested': skus_requested, 'horizon_months': horizon, 'inventory_count': len(inventory)},
         'output': {'net_requirements_count': len(net_requirements), 'skus': [r['sku'] for r in net_requirements]},
         'confidence': confidence,
@@ -131,4 +216,19 @@ Respond in JSON format ONLY:
         'demand_confidence': confidence,
         'current_agent': 'demand_analyst',
         'error': None,
+        'agent_activity': update_agent_activity(
+            state,
+            agent_name,
+            status='completed',
+            summary=rationale,
+            confidence=confidence,
+            llm_used=llm_used,
+            llm_error=llm_error,
+            details={
+                'inventory_count': len(inventory),
+                'net_requirements_count': len(net_requirements),
+                'sample_skus': [r['sku'] for r in net_requirements[:5]],
+                'horizon_months': horizon,
+            },
+        ),
     }

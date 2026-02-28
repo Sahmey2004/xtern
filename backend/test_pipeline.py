@@ -1,17 +1,13 @@
 import os
-import json
-import uuid
-from pathlib import Path
-from dotenv import load_dotenv
 
 # Set python path to include the current directory
 import sys
 sys.path.append(os.getcwd())
 sys.path.append(os.path.join(os.getcwd(), 'backend'))
 
-# Load .env
-env_path = Path('backend/.env')
-load_dotenv(dotenv_path=str(env_path))
+from config import load_project_env
+
+load_project_env()
 
 from backend.graph.pipeline import run_pipeline
 

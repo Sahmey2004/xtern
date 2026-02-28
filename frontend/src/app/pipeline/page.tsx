@@ -1,6 +1,8 @@
 'use client';
+
 import { useState } from 'react';
-import { runPipeline } from '@/lib/api';
+
+import { type AgentActivityEntry, runPipeline } from '@/lib/api';
 
 type PipelineResult = {
   status: string;
@@ -19,10 +21,31 @@ type PipelineResult = {
   supplier_rationale?: string;
   container_rationale?: string;
   po_rationale?: string;
+  agent_activity?: Record<string, AgentActivityEntry>;
   error?: string;
 };
 
 const SAMPLE_SKUS = ['FLT-001', 'FLT-002', 'ENG-001', 'ELC-001', 'GSK-001'];
+
+const AGENT_TABS = [
+  { key: 'DemandAnalyst', label: 'Demand Analyst', desc: 'Calculating net requirements from inventory and forecast data.' },
+  { key: 'SupplierSelector', label: 'Supplier Selector', desc: 'Scoring suppliers and selecting the best fit for each SKU.' },
+  { key: 'ContainerOptimizer', label: 'Container Optimizer', desc: 'Planning container allocation and estimated freight.' },
+  { key: 'POCompiler', label: 'PO Compiler', desc: 'Compiling the draft PO and generating the final summary.' },
+] as const;
+
+const STEP_ORDER = AGENT_TABS.map(agent => agent.key);
+
+function formatDetailValue(value: unknown) {
+  if (value == null) return 'N/A';
+  if (Array.isArray(value)) {
+    return value.length === 0 ? 'None' : JSON.stringify(value);
+  }
+  if (typeof value === 'object') {
+    return JSON.stringify(value);
+  }
+  return String(value);
+}
 
 export default function PipelinePage() {
   const [selectedSkus, setSelectedSkus] = useState<string[]>([]);
@@ -30,14 +53,8 @@ export default function PipelinePage() {
   const [horizon, setHorizon] = useState(3);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PipelineResult | null>(null);
-  const [currentStep, setCurrentStep] = useState('');
-
-  const steps = [
-    { key: 'demand',    label: 'Demand Analyst',       desc: 'Calculating net requirements…' },
-    { key: 'supplier',  label: 'Supplier Selector',     desc: 'Scoring & selecting suppliers…' },
-    { key: 'container', label: 'Container Optimizer',   desc: 'Planning container allocation…' },
-    { key: 'po',        label: 'PO Compiler',           desc: 'Drafting purchase order…' },
-  ];
+  const [currentAgentKey, setCurrentAgentKey] = useState<(typeof STEP_ORDER)[number]>('DemandAnalyst');
+  const [activeAgentTab, setActiveAgentTab] = useState<(typeof STEP_ORDER)[number]>('DemandAnalyst');
 
   const toggleSku = (sku: string) =>
     setSelectedSkus(prev => prev.includes(sku) ? prev.filter(s => s !== sku) : [...prev, sku]);
@@ -51,45 +68,75 @@ export default function PipelinePage() {
   const handleRun = async () => {
     setLoading(true);
     setResult(null);
-    setCurrentStep('demand');
+    setCurrentAgentKey('DemandAnalyst');
+    setActiveAgentTab('DemandAnalyst');
 
-    // Simulate step progress while waiting
-    const stepKeys = ['demand', 'supplier', 'container', 'po'];
     let stepIdx = 0;
     const interval = setInterval(() => {
-      stepIdx = (stepIdx + 1) % stepKeys.length;
-      setCurrentStep(stepKeys[stepIdx]);
+      stepIdx = (stepIdx + 1) % STEP_ORDER.length;
+      setCurrentAgentKey(STEP_ORDER[stepIdx]);
     }, 4000);
 
     try {
-      const data = await runPipeline(selectedSkus);
+      const data = await runPipeline(selectedSkus, horizon);
       setResult(data);
-    } catch (err: any) {
-      setResult({ status: 'error', error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Pipeline request failed.';
+      setResult({ status: 'error', error: message });
     } finally {
       clearInterval(interval);
-      setCurrentStep('done');
       setLoading(false);
     }
   };
 
-  const getStepStatus = (key: string) => {
-    if (!loading && !result) return 'idle';
-    if (!loading && result) return 'done';
-    const stepKeys = ['demand', 'supplier', 'container', 'po'];
-    const current = stepKeys.indexOf(currentStep);
-    const idx = stepKeys.indexOf(key);
-    if (idx < current) return 'done';
-    if (idx === current) return 'active';
-    return 'waiting';
+  const getStepStatus = (agentKey: (typeof STEP_ORDER)[number]) => {
+    if (loading) {
+      const current = STEP_ORDER.indexOf(currentAgentKey);
+      const idx = STEP_ORDER.indexOf(agentKey);
+      if (idx < current) return 'done';
+      if (idx === current) return 'active';
+      return 'waiting';
+    }
+
+    if (!result) return 'idle';
+
+    const agentEntry = result.agent_activity?.[agentKey];
+    if (agentEntry?.status === 'completed') return 'done';
+    if (agentEntry?.status === 'failed') return 'failed';
+
+    let lastFinished: (typeof STEP_ORDER)[number] | undefined;
+    for (const key of [...STEP_ORDER].reverse()) {
+      if (result.agent_activity?.[key]) {
+        lastFinished = key;
+        break;
+      }
+    }
+    if (!lastFinished) return 'idle';
+
+    return STEP_ORDER.indexOf(agentKey) <= STEP_ORDER.indexOf(lastFinished) ? 'done' : 'idle';
   };
 
-  return (
-    <div className="max-w-4xl">
-      <h1 className="text-3xl font-bold mb-2">Run Pipeline</h1>
-      <p className="text-gray-500 mb-8">Trigger the multi-agent PO automation pipeline.</p>
+  const fallbackSummaryByAgent: Record<string, string | undefined> = {
+    DemandAnalyst: result?.demand_rationale,
+    SupplierSelector: result?.supplier_rationale,
+    ContainerOptimizer: result?.container_rationale,
+    POCompiler: result?.po_rationale,
+  };
 
-      {/* Config panel */}
+  const activeAgentEntry = result?.agent_activity?.[activeAgentTab];
+  const activeAgentMeta = AGENT_TABS.find(agent => agent.key === activeAgentTab)!;
+  const activeSummary = loading
+    ? activeAgentMeta.desc
+    : activeAgentEntry?.summary || fallbackSummaryByAgent[activeAgentTab] || 'No summary available yet.';
+  const detailEntries: [string, unknown][] = loading
+    ? [['current_work', activeAgentMeta.desc]]
+    : Object.entries(activeAgentEntry?.details || {});
+
+  return (
+    <div className="max-w-5xl">
+      <h1 className="text-3xl font-bold mb-2">Run Pipeline</h1>
+      <p className="text-gray-500 mb-8">Trigger the multi-agent PO automation pipeline and inspect each agent&apos;s status.</p>
+
       <div className="bg-white rounded-lg shadow p-6 mb-6">
         <h2 className="font-semibold text-lg mb-4">Pipeline Configuration</h2>
 
@@ -160,34 +207,91 @@ export default function PipelinePage() {
         </button>
       </div>
 
-      {/* Agent progress */}
-      {loading && (
+      {(loading || result) && (
         <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="font-semibold text-lg mb-4">Agent Progress</h2>
-          <div className="space-y-3">
-            {steps.map(step => {
-              const status = getStepStatus(step.key);
+          <div className="flex flex-col gap-2 mb-5 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="font-semibold text-lg">Agent Activity</h2>
+              <p className="text-sm text-gray-500">Each tab shows the current status, summary, and structured details for one agent.</p>
+            </div>
+            {result?.status === 'error' && result.error && (
+              <span className="text-xs font-medium px-3 py-1 rounded-full bg-red-100 text-red-700">
+                Pipeline failed
+              </span>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-2 mb-5">
+            {AGENT_TABS.map(agent => {
+              const status = getStepStatus(agent.key);
+              const statusClass =
+                status === 'done' ? 'bg-green-100 text-green-700 border-green-200' :
+                status === 'active' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                status === 'failed' ? 'bg-red-100 text-red-700 border-red-200' :
+                'bg-gray-100 text-gray-600 border-gray-200';
+
               return (
-                <div key={step.key} className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                    status === 'done'    ? 'bg-green-500 text-white' :
-                    status === 'active'  ? 'bg-blue-500 text-white animate-pulse' :
-                    'bg-gray-100 text-gray-400'
-                  }`}>
-                    {status === 'done' ? '✓' : steps.indexOf(step) + 1}
-                  </div>
-                  <div>
-                    <p className="font-medium text-sm">{step.label}</p>
-                    {status === 'active' && <p className="text-xs text-blue-500">{step.desc}</p>}
-                  </div>
-                </div>
+                <button
+                  key={agent.key}
+                  onClick={() => setActiveAgentTab(agent.key)}
+                  className={`px-4 py-2 rounded-lg border text-sm font-medium transition ${
+                    activeAgentTab === agent.key ? 'ring-2 ring-blue-200' : ''
+                  } ${statusClass}`}
+                >
+                  {agent.label}
+                </button>
               );
             })}
+          </div>
+
+          <div className="border rounded-lg p-5 bg-slate-50">
+            <div className="flex flex-col gap-3 mb-4 md:flex-row md:items-start md:justify-between">
+              <div>
+                <h3 className="font-semibold text-base text-slate-900">{activeAgentMeta.label}</h3>
+                <p className="text-sm text-slate-600 mt-1">{activeSummary}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <span className={`text-xs px-3 py-1 rounded-full font-medium ${
+                  getStepStatus(activeAgentTab) === 'done' ? 'bg-green-100 text-green-700' :
+                  getStepStatus(activeAgentTab) === 'active' ? 'bg-blue-100 text-blue-700' :
+                  getStepStatus(activeAgentTab) === 'failed' ? 'bg-red-100 text-red-700' :
+                  'bg-gray-100 text-gray-600'
+                }`}>
+                  {loading && activeAgentTab === currentAgentKey ? 'Running' : activeAgentEntry?.status || getStepStatus(activeAgentTab)}
+                </span>
+                {activeAgentEntry?.confidence != null && (
+                  <span className="text-xs px-3 py-1 rounded-full bg-white text-slate-700 border">
+                    Confidence {Math.round(activeAgentEntry.confidence * 100)}%
+                  </span>
+                )}
+                {!loading && (
+                  <span className={`text-xs px-3 py-1 rounded-full border ${
+                    activeAgentEntry?.llm_used ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
+                  }`}>
+                    {activeAgentEntry?.llm_used ? 'OpenRouter used' : 'No LLM call'}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {activeAgentEntry?.llm_error && (
+              <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+                {activeAgentEntry.llm_error}
+              </div>
+            )}
+
+            <div className="grid gap-3 md:grid-cols-2">
+              {detailEntries.map(([key, value]) => (
+                <div key={key} className="rounded-md bg-white border px-3 py-3">
+                  <p className="text-[11px] uppercase tracking-wide text-slate-500">{key.replace(/_/g, ' ')}</p>
+                  <p className="text-sm text-slate-800 mt-1 break-words">{formatDetailValue(value)}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
 
-      {/* Results */}
       {result && (
         <div className={`rounded-lg shadow p-6 ${result.status === 'error' ? 'bg-red-50' : 'bg-green-50'}`}>
           <h2 className="font-semibold text-lg mb-4">
@@ -209,23 +313,6 @@ export default function PipelinePage() {
                 <div key={card.label} className="bg-white rounded p-4 shadow-sm">
                   <p className="text-xs text-gray-500">{card.label}</p>
                   <p className="font-bold text-lg mt-1">{card.value ?? '—'}</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Agent rationales */}
-          {result.demand_rationale && (
-            <div className="space-y-3">
-              {[
-                { agent: 'Demand Analyst', text: result.demand_rationale },
-                { agent: 'Supplier Selector', text: result.supplier_rationale },
-                { agent: 'Container Optimizer', text: result.container_rationale },
-                { agent: 'PO Compiler', text: result.po_rationale },
-              ].filter(r => r.text).map(r => (
-                <div key={r.agent} className="bg-white rounded p-3 text-sm">
-                  <span className="font-semibold text-gray-700">{r.agent}: </span>
-                  <span className="text-gray-600">{r.text}</span>
                 </div>
               ))}
             </div>

@@ -1,17 +1,16 @@
 from fastapi import FastAPI, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from dotenv import load_dotenv
 from pydantic import BaseModel
 from typing import List, Optional
 import os
 import asyncio
 import json
-from pathlib import Path
 
-# Load .env from parent directory
-env_path = Path(__file__).parent.parent / '.env'
-load_dotenv(dotenv_path=str(env_path))
+from config import first_env_file, load_project_env
+
+# Load env from repo root first, then backend/.env as a fallback.
+load_project_env()
 
 app = FastAPI(
     title='Supply Chain PO Automation',
@@ -33,6 +32,7 @@ def health_check():
     return {
         'status': 'ok',
         'service': 'supply-chain-po-backend',
+        'env_file_found': first_env_file(),
         'supabase_configured': bool(os.getenv('SUPABASE_SERVICE_ROLE_KEY')),
         'openrouter_configured': bool(os.getenv('OPENROUTER_API_KEY')),
     }
@@ -56,19 +56,14 @@ async def test_supabase():
 async def test_openrouter():
     """Verify OpenRouter LLM connection works."""
     try:
-        from langchain_openai import ChatOpenAI
-        llm = ChatOpenAI(
-            model='meta-llama/llama-3.1-8b-instruct:free',
-            openai_api_key=os.getenv('OPENROUTER_API_KEY'),
-            openai_api_base='https://openrouter.ai/api/v1',
-            max_tokens=50,
-            default_headers={
-                'HTTP-Referer': 'http://localhost:3000',
-                'X-Title': 'Supply Chain PO Automation'
-            }
-        )
+        from agents.llm_config import get_llm
+        llm = get_llm(max_tokens=50, temperature=0)
         response = llm.invoke('Say hello in one word.')
-        return {'status': 'connected', 'response': response.content}
+        return {
+            'status': 'connected',
+            'model': os.getenv('OPENROUTER_MODEL', 'openrouter/free'),
+            'response': response.content,
+        }
     except Exception as e:
         return {'status': 'error', 'message': str(e)}
     
@@ -167,6 +162,7 @@ async def run_pipeline_endpoint(request: PipelineRunRequest):
             'supplier_rationale': state.get('supplier_rationale'),
             'container_rationale': state.get('container_rationale'),
             'po_rationale': state.get('po_rationale'),
+            'agent_activity': state.get('agent_activity', {}),
             'error': state.get('error'),
         }
     except Exception as e:
