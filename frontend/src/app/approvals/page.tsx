@@ -13,6 +13,14 @@ type LineItem = {
   rationale: string;
 };
 
+type ContainerPlan = {
+  num_containers?: number;
+  container_type?: string;
+  volume_utilisation_pct?: number;
+  weight_utilisation_pct?: number;
+  estimated_freight_usd?: number;
+};
+
 type PurchaseOrder = {
   po_number: string;
   status: string;
@@ -20,7 +28,7 @@ type PurchaseOrder = {
   created_by: string;
   total_usd: number;
   notes: string;
-  container_plan?: any;
+  container_plan?: ContainerPlan | null;
   po_line_items: LineItem[];
 };
 
@@ -51,14 +59,15 @@ export default function ApprovalsPage() {
     if (!selectedPo) return;
     setSubmitting(true);
     try {
-      await approvePO(selectedPo.po_number, reviewer, notes);
+      await approvePO(selectedPo.po_number, reviewer, notes, action);
       setToast(`PO ${selectedPo.po_number} ${action}d successfully.`);
       setSelectedPo(null);
       setNotes('');
       setTimeout(() => setToast(''), 3000);
       fetchPos();
-    } catch (e: any) {
-      setToast(`Error: ${e.message}`);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Approval request failed.';
+      setToast(`Error: ${message}`);
     } finally {
       setSubmitting(false);
     }

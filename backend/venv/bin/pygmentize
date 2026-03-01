@@ -1,6 +1,7 @@
-#!/Users/sahmey/xtern/backend/venv/bin/python3.14
+#!/Users/sahmey/Codes/xtern/backend/venv/bin/python3.14
 import sys
 from pygments.cmdline import main
 if __name__ == '__main__':
-    sys.argv[0] = sys.argv[0].removesuffix('.exe')
+    if sys.argv[0].endswith('.exe'):
+        sys.argv[0] = sys.argv[0][:-4]
     sys.exit(main())

@@ -5,34 +5,32 @@ Agent 2: Supplier Selector
 - Writes decision log
 """
 import json
-import os
-from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
+from agents.llm_config import get_llm, update_agent_activity
 from mcp_client.client import call_mcp_tool
 from graph.state import PipelineState
 
 
-def get_llm():
-    return ChatOpenAI(
-        model='meta-llama/llama-3.1-8b-instruct:free',
-        openai_api_key=os.getenv('OPENROUTER_API_KEY'),
-        openai_api_base='https://openrouter.ai/api/v1',
-        max_tokens=1024,
-        temperature=0.1,
-        default_headers={
-            'HTTP-Referer': 'http://localhost:3000',
-            'X-Title': 'Supply Chain PO Automation',
-        }
-    )
-
-
 def supplier_selector_node(state: PipelineState) -> PipelineState:
     """LangGraph node: selects best supplier for each SKU."""
+    agent_name = 'SupplierSelector'
     run_id = state.get('run_id', 'unknown')
     net_requirements = state.get('net_requirements', [])
 
     if not net_requirements:
-        return {**state, 'error': 'No net requirements — demand analyst must run first', 'current_agent': 'supplier_selector'}
+        error_message = 'No net requirements — demand analyst must run first'
+        return {
+            **state,
+            'error': error_message,
+            'current_agent': 'supplier_selector',
+            'agent_activity': update_agent_activity(
+                state,
+                agent_name,
+                status='failed',
+                summary=error_message,
+                details={'net_requirements_count': 0},
+            ),
+        }
 
     supplier_selections = []
     total_scored = 0
@@ -79,7 +77,6 @@ def supplier_selector_node(state: PipelineState) -> PipelineState:
             })
 
     # LLM summary
-    llm = get_llm()
     prompt = f"""You are a procurement analyst. {total_scored} out of {len(net_requirements)} SKUs have been matched to suppliers.
 
 Sample selections (first 3):
@@ -87,19 +84,57 @@ Sample selections (first 3):
 
 Provide a brief procurement summary and confidence score in JSON:
 {{"rationale": "...", "confidence": 0.0_to_1.0}}"""
+    llm_error = None
+    llm_used = False
+    try:
+        llm = get_llm(max_tokens=1024, temperature=0.1)
+        response = llm.invoke([SystemMessage(content='Respond only with valid JSON.'), HumanMessage(content=prompt)])
+        llm_used = True
+    except RuntimeError as exc:
+        error_message = f'{agent_name} could not reach OpenRouter: {exc}'
+        return {
+            **state,
+            'supplier_selections': supplier_selections,
+            'current_agent': 'supplier_selector',
+            'error': error_message,
+            'agent_activity': update_agent_activity(
+                state,
+                agent_name,
+                status='failed',
+                summary=error_message,
+                llm_error=str(exc),
+                details={'matched_count': total_scored, 'net_requirements_count': len(net_requirements)},
+            ),
+        }
+    except Exception as exc:
+        error_message = f'{agent_name} OpenRouter request failed: {exc}'
+        return {
+            **state,
+            'supplier_selections': supplier_selections,
+            'current_agent': 'supplier_selector',
+            'error': error_message,
+            'agent_activity': update_agent_activity(
+                state,
+                agent_name,
+                status='failed',
+                summary=error_message,
+                llm_error=str(exc),
+                details={'matched_count': total_scored, 'net_requirements_count': len(net_requirements)},
+            ),
+        }
 
     try:
-        response = llm.invoke([SystemMessage(content='Respond only with valid JSON.'), HumanMessage(content=prompt)])
         parsed = json.loads(response.content.strip().strip('```json').strip('```'))
         rationale = parsed.get('rationale', '')
         confidence = float(parsed.get('confidence', 0.82))
-    except Exception:
+    except Exception as exc:
+        llm_error = f'OpenRouter response parse failed: {exc}'
         rationale = f'Supplier selected for {total_scored}/{len(net_requirements)} SKUs using weighted scoring.'
         confidence = 0.82
 
     call_mcp_tool('po', 'log_decision', {
         'run_id': run_id,
-        'agent_name': 'SupplierSelector',
+        'agent_name': agent_name,
         'inputs': {'sku_count': len(net_requirements)},
         'output': {'matched_count': total_scored, 'selections': [{'sku': s['sku'], 'supplier': s.get('supplier_id')} for s in supplier_selections]},
         'confidence': confidence,
@@ -113,4 +148,25 @@ Provide a brief procurement summary and confidence score in JSON:
         'supplier_confidence': confidence,
         'current_agent': 'supplier_selector',
         'error': None,
+        'agent_activity': update_agent_activity(
+            state,
+            agent_name,
+            status='completed',
+            summary=rationale,
+            confidence=confidence,
+            llm_used=llm_used,
+            llm_error=llm_error,
+            details={
+                'matched_count': total_scored,
+                'net_requirements_count': len(net_requirements),
+                'top_suppliers': [
+                    {
+                        'sku': selection['sku'],
+                        'supplier_id': selection.get('supplier_id'),
+                        'score': selection.get('score'),
+                    }
+                    for selection in supplier_selections[:5]
+                ],
+            },
+        ),
     }

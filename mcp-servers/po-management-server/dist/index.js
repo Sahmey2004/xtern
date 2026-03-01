@@ -7,7 +7,9 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-dotenv.config({ path: join(__dirname, '../../../.env'), quiet: true });
+for (const envPath of [join(__dirname, '../../../.env'), join(__dirname, '../../../backend/.env')]) {
+    dotenv.config({ path: envPath, override: false, quiet: true });
+}
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 const server = new McpServer({ name: 'po-management-server', version: '1.0.0' });
 server.tool('ping', 'Health check', {}, async () => ({

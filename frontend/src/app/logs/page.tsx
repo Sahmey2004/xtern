@@ -9,8 +9,8 @@ type LogEntry = {
   po_number?: string;
   agent_name: string;
   timestamp: string;
-  inputs: any;
-  output: any;
+  inputs: Record<string, unknown>;
+  output: Record<string, unknown>;
   confidence?: number;
   rationale: string;
 };

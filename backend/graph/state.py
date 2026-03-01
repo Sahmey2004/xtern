@@ -45,3 +45,4 @@ class PipelineState(TypedDict, total=False):
     # ── Error handling ────────────────────────────────────────
     error: Optional[str]
     current_agent: str
+    agent_activity: Dict[str, Dict[str, Any]]

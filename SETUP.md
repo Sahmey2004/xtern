@@ -8,13 +8,14 @@
 
 ## 1. Create your .env file
 
-Create `/Users/avanikabra/Desktop/xtern/.env` with these values:
+Create `.env` in the repo root (or `backend/.env` as a fallback) with these values:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://YOUR-PROJECT-ID.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGci...
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGci...
 OPENROUTER_API_KEY=sk-or-v1-...
+OPENROUTER_MODEL=openrouter/free
 NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
 ```
 
