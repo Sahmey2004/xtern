@@ -91,7 +91,7 @@ Provide a brief procurement summary and confidence score in JSON:
         response = llm.invoke([SystemMessage(content='Respond only with valid JSON.'), HumanMessage(content=prompt)])
         llm_used = True
     except RuntimeError as exc:
-        error_message = f'{agent_name} could not reach OpenRouter: {exc}'
+        error_message = f'{agent_name} could not reach OpenAI: {exc}'
         return {
             **state,
             'supplier_selections': supplier_selections,
@@ -107,7 +107,7 @@ Provide a brief procurement summary and confidence score in JSON:
             ),
         }
     except Exception as exc:
-        error_message = f'{agent_name} OpenRouter request failed: {exc}'
+        error_message = f'{agent_name} OpenAI request failed: {exc}'
         return {
             **state,
             'supplier_selections': supplier_selections,
@@ -128,7 +128,7 @@ Provide a brief procurement summary and confidence score in JSON:
         rationale = parsed.get('rationale', '')
         confidence = float(parsed.get('confidence', 0.82))
     except Exception as exc:
-        llm_error = f'OpenRouter response parse failed: {exc}'
+        llm_error = f'OpenAI response parse failed: {exc}'
         rationale = f'Supplier selected for {total_scored}/{len(net_requirements)} SKUs using weighted scoring.'
         confidence = 0.82
 

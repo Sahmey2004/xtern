@@ -67,7 +67,7 @@ Output plain text only (no JSON)."""
         po_notes = response.content.strip()
         llm_used = True
     except RuntimeError as exc:
-        error_message = f'{agent_name} could not reach OpenRouter: {exc}'
+        error_message = f'{agent_name} could not reach OpenAI: {exc}'
         return {
             **state,
             'current_agent': 'po_compiler',
@@ -82,7 +82,7 @@ Output plain text only (no JSON)."""
             ),
         }
     except Exception as exc:
-        llm_error = f'OpenRouter request failed: {exc}'
+        llm_error = f'OpenAI request failed: {exc}'
         po_notes = f"Draft PO: {len(po_lines)} SKUs, subtotal ${subtotal:,.2f}, est. freight ${freight:,.0f}, total ${total_usd:,.2f}."
 
     # Create PO in Supabase

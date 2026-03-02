@@ -268,7 +268,7 @@ export default function PipelinePage() {
                   <span className={`text-xs px-3 py-1 rounded-full border ${
                     activeAgentEntry?.llm_used ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
                   }`}>
-                    {activeAgentEntry?.llm_used ? 'OpenRouter used' : 'No LLM call'}
+                    {activeAgentEntry?.llm_used ? 'OpenAI used' : 'No LLM call'}
                   </span>
                 )}
               </div>

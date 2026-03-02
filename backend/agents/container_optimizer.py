@@ -117,7 +117,7 @@ Write a one-sentence rationale and confidence score. JSON only:
         response = llm.invoke([SystemMessage(content='Respond only with valid JSON.'), HumanMessage(content=prompt)])
         llm_used = True
     except RuntimeError as exc:
-        error_message = f'{agent_name} could not reach OpenRouter: {exc}'
+        error_message = f'{agent_name} could not reach OpenAI: {exc}'
         return {
             **state,
             'order_line_items': order_line_items,
@@ -134,7 +134,7 @@ Write a one-sentence rationale and confidence score. JSON only:
             ),
         }
     except Exception as exc:
-        error_message = f'{agent_name} OpenRouter request failed: {exc}'
+        error_message = f'{agent_name} OpenAI request failed: {exc}'
         return {
             **state,
             'order_line_items': order_line_items,
@@ -156,7 +156,7 @@ Write a one-sentence rationale and confidence score. JSON only:
         rationale = parsed.get('rationale', '')
         confidence = float(parsed.get('confidence', 0.88))
     except Exception as exc:
-        llm_error = f'OpenRouter response parse failed: {exc}'
+        llm_error = f'OpenAI response parse failed: {exc}'
         util = container_plan.get('binding_utilisation_pct', 0)
         rationale = f"{container_plan.get('num_containers', 1)}x {container_plan.get('container_type', '40ft')} container(s) at {util:.0f}% utilisation, est. ${container_plan.get('estimated_freight_usd', 0):,.0f} freight."
         confidence = 0.88

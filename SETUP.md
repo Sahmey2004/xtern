@@ -4,7 +4,7 @@
 - Node.js 18+
 - Python 3.11+
 - A Supabase account (free tier): https://supabase.com
-- An OpenRouter account (free tier): https://openrouter.ai
+- An OpenAI API account: https://platform.openai.com
 
 ## 1. Create your .env file
 
@@ -14,13 +14,13 @@ Create `.env` in the repo root (or `backend/.env` as a fallback) with these valu
 NEXT_PUBLIC_SUPABASE_URL=https://YOUR-PROJECT-ID.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGci...
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGci...
-OPENROUTER_API_KEY=sk-or-v1-...
-OPENROUTER_MODEL=openrouter/free
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-4o-mini
 NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
 ```
 
 Get Supabase keys from: Supabase Dashboard → Project Settings → API
-Get OpenRouter key from: https://openrouter.ai/keys
+Get OpenAI key from: https://platform.openai.com/api-keys
 
 ## 2. Create frontend/.env.local
 
@@ -82,9 +82,9 @@ Open: http://localhost:3000
 # Backend health
 curl http://localhost:8000/health
 
-# Supabase + OpenRouter test
+# Supabase + OpenAI test
 curl http://localhost:8000/test-supabase
-curl http://localhost:8000/test-openrouter
+curl http://localhost:8000/test-openai
 
 # Data counts
 curl http://localhost:8000/data-summary

@@ -121,7 +121,7 @@ export default function DashboardPage() {
         </div>
         <div style={{ width: 1, height: 16, background: 'var(--border)' }} />
         <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-          LLM: OpenRouter (Llama 3.1 8B Free)
+          LLM: OpenAI
         </span>
       </div>
 

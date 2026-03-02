@@ -14,23 +14,18 @@ def get_llm(
 ) -> ChatOpenAI:
     load_project_env()
 
-    api_key = os.getenv("OPENROUTER_API_KEY")
-    resolved_model = model or os.getenv("OPENROUTER_MODEL", "openrouter/free")
+    api_key = os.getenv("OPENAI_API_KEY")
+    resolved_model = model or os.getenv("OPENAI_MODEL", "gpt-4o-mini")
     if not api_key:
         raise RuntimeError(
-            "OPENROUTER_API_KEY is not configured. Add it to the repo root .env or backend/.env before running the pipeline."
+            "OPENAI_API_KEY is not configured. Add it to the repo root .env or backend/.env before running the pipeline."
         )
 
     return ChatOpenAI(
         model=resolved_model,
         openai_api_key=api_key,
-        openai_api_base="https://openrouter.ai/api/v1",
         max_tokens=max_tokens,
         temperature=temperature,
-        default_headers={
-            "HTTP-Referer": "http://localhost:3000",
-            "X-Title": "Supply Chain PO Automation",
-        },
     )
 
 

@@ -34,7 +34,9 @@ def health_check():
         'service': 'supply-chain-po-backend',
         'env_file_found': first_env_file(),
         'supabase_configured': bool(os.getenv('SUPABASE_SERVICE_ROLE_KEY')),
-        'openrouter_configured': bool(os.getenv('OPENROUTER_API_KEY')),
+        'openai_configured': bool(os.getenv('OPENAI_API_KEY')),
+        'llm_provider': 'openai',
+        'openai_model': os.getenv('OPENAI_MODEL', 'gpt-4o-mini'),
     }
 
 @app.get('/test-supabase')
@@ -52,20 +54,26 @@ async def test_supabase():
     except Exception as e:
         return {'status': 'error', 'message': str(e)}
 
-@app.get('/test-openrouter')
-async def test_openrouter():
-    """Verify OpenRouter LLM connection works."""
+@app.get('/test-openai')
+async def test_openai():
+    """Verify OpenAI LLM connection works."""
     try:
         from agents.llm_config import get_llm
         llm = get_llm(max_tokens=50, temperature=0)
         response = llm.invoke('Say hello in one word.')
         return {
             'status': 'connected',
-            'model': os.getenv('OPENROUTER_MODEL', 'openrouter/free'),
+            'provider': 'openai',
+            'model': os.getenv('OPENAI_MODEL', 'gpt-4o-mini'),
             'response': response.content,
         }
     except Exception as e:
         return {'status': 'error', 'message': str(e)}
+
+@app.get('/test-openrouter')
+async def test_openrouter_compat():
+    """Backward-compatible alias for older clients."""
+    return await test_openai()
     
 @app.get('/data-summary')
 async def data_summary():
@@ -149,6 +157,8 @@ async def run_pipeline_endpoint(request: PipelineRunRequest):
             triggered_by=request.triggered_by or 'planner',
             horizon=request.horizon_months or 3,
         )
+        agent_activity = state.get('agent_activity', {}) or {}
+        openai_requests_made = sum(1 for entry in agent_activity.values() if entry.get('llm_used'))
         return {
             'status': 'completed' if not state.get('error') else 'error',
             'run_id': state.get('run_id'),
@@ -162,7 +172,8 @@ async def run_pipeline_endpoint(request: PipelineRunRequest):
             'supplier_rationale': state.get('supplier_rationale'),
             'container_rationale': state.get('container_rationale'),
             'po_rationale': state.get('po_rationale'),
-            'agent_activity': state.get('agent_activity', {}),
+            'agent_activity': agent_activity,
+            'openai_requests_made': openai_requests_made,
             'error': state.get('error'),
         }
     except Exception as e:

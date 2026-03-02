@@ -138,7 +138,7 @@ Respond in JSON format ONLY:
         response = llm.invoke([SystemMessage(content='You are a supply chain analyst. Respond only with valid JSON.'), HumanMessage(content=prompt)])
         llm_used = True
     except RuntimeError as exc:
-        error_message = f'{agent_name} could not reach OpenRouter: {exc}'
+        error_message = f'{agent_name} could not reach OpenAI: {exc}'
         return {
             **state,
             'run_id': run_id,
@@ -162,7 +162,7 @@ Respond in JSON format ONLY:
             ),
         }
     except Exception as exc:
-        error_message = f'{agent_name} OpenRouter request failed: {exc}'
+        error_message = f'{agent_name} OpenAI request failed: {exc}'
         return {
             **state,
             'run_id': run_id,
@@ -191,7 +191,7 @@ Respond in JSON format ONLY:
         rationale = parsed.get('rationale', 'Demand calculated from forecast minus available stock.')
         confidence = float(parsed.get('confidence', 0.85))
     except Exception as exc:
-        llm_error = f'OpenRouter response parse failed: {exc}'
+        llm_error = f'OpenAI response parse failed: {exc}'
         rationale = f'Net requirements calculated: {len(net_requirements)} SKUs need replenishment across {horizon}-month horizon.'
         confidence = 0.85
 
