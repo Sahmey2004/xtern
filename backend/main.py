@@ -21,7 +21,7 @@ app = FastAPI(
 # Allow frontend to call backend (CORS)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['http://localhost:3000', 'https://*.vercel.app'],
+    allow_origins=['http://localhost:3000', 'http://localhost:3001', 'https://*.vercel.app'],
     allow_credentials=True,
     allow_methods=['*'],
     allow_headers=['*'],
@@ -142,42 +142,43 @@ class ApprovalRequest(BaseModel):
 
 
 # ─── PIPELINE ENDPOINTS ───────────────────────────────────────
+# Commeted out but kept old endpoints while testing new
 
-@app.post('/pipeline/run')
-async def run_pipeline_endpoint(request: PipelineRunRequest):
-    """
-    Triggers the multi-agent PO pipeline.
-    Runs synchronously (blocks until all 4 agents complete).
-    Returns full state including po_number and per-agent outputs.
-    """
-    try:
-        from graph.pipeline import run_pipeline
-        state = run_pipeline(
-            skus=request.skus or [],
-            triggered_by=request.triggered_by or 'planner',
-            horizon=request.horizon_months or 3,
-        )
-        agent_activity = state.get('agent_activity', {}) or {}
-        openai_requests_made = sum(1 for entry in agent_activity.values() if entry.get('llm_used'))
-        return {
-            'status': 'completed' if not state.get('error') else 'error',
-            'run_id': state.get('run_id'),
-            'po_number': state.get('po_number'),
-            'po_total_usd': state.get('po_total_usd'),
-            'approval_status': state.get('approval_status'),
-            'net_requirements_count': len(state.get('net_requirements', [])),
-            'supplier_selections_count': len(state.get('supplier_selections', [])),
-            'container_plan': state.get('container_plan'),
-            'demand_rationale': state.get('demand_rationale'),
-            'supplier_rationale': state.get('supplier_rationale'),
-            'container_rationale': state.get('container_rationale'),
-            'po_rationale': state.get('po_rationale'),
-            'agent_activity': agent_activity,
-            'openai_requests_made': openai_requests_made,
-            'error': state.get('error'),
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# @app.post('/pipeline/run')
+# async def run_pipeline_endpoint(request: PipelineRunRequest):
+#     """
+#     Triggers the multi-agent PO pipeline.
+#     Runs synchronously (blocks until all 4 agents complete).
+#     Returns full state including po_number and per-agent outputs.
+#     """
+#     try:
+#         from graph.pipeline import run_pipeline
+#         state = run_pipeline(
+#             skus=request.skus or [],
+#             triggered_by=request.triggered_by or 'planner',
+#             horizon=request.horizon_months or 3,
+#         )
+#         agent_activity = state.get('agent_activity', {}) or {}
+#         openai_requests_made = sum(1 for entry in agent_activity.values() if entry.get('llm_used'))
+#         return {
+#             'status': 'completed' if not state.get('error') else 'error',
+#             'run_id': state.get('run_id'),
+#             'po_number': state.get('po_number'),
+#             'po_total_usd': state.get('po_total_usd'),
+#             'approval_status': state.get('approval_status'),
+#             'net_requirements_count': len(state.get('net_requirements', [])),
+#             'supplier_selections_count': len(state.get('supplier_selections', [])),
+#             'container_plan': state.get('container_plan'),
+#             'demand_rationale': state.get('demand_rationale'),
+#             'supplier_rationale': state.get('supplier_rationale'),
+#             'container_rationale': state.get('container_rationale'),
+#             'po_rationale': state.get('po_rationale'),
+#             'agent_activity': agent_activity,
+#             'openai_requests_made': openai_requests_made,
+#             'error': state.get('error'),
+#         }
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post('/pipeline/approve/{po_number}')
@@ -226,3 +227,136 @@ async def get_decision_logs(run_id: Optional[str] = None, po_number: Optional[st
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ─── STEP-BY-STEP PIPELINE (human-in-the-loop) ───────────────
+
+pipeline_states: dict = {}
+
+
+@app.post('/pipeline/start')
+async def start_pipeline(request: PipelineRunRequest):
+    """Step 1: Run Demand Analyst only. User reviews before continuing."""
+    from agents.demand_analyst import demand_analyst_node
+    import uuid
+
+    run_id = str(uuid.uuid4())
+    state = {
+        'run_id': run_id,
+        'triggered_by': request.triggered_by or 'planner',
+        'planning_horizon_months': request.horizon_months or 3,
+        'skus_to_plan': request.skus or [],
+        'approval_status': 'pending',
+        'current_agent': 'orchestrator',
+    }
+
+    state = demand_analyst_node(state)
+    pipeline_states[run_id] = state
+
+    if state.get('error'):
+        raise HTTPException(status_code=500, detail=state['error'])
+
+    return {
+        'run_id': run_id,
+        'agent': 'demand_analyst',
+        'status': 'awaiting_input',
+        'next_agent': 'supplier_selector',
+        'net_requirements': state.get('net_requirements', []),
+        'demand_rationale': state.get('demand_rationale'),
+        'demand_confidence': state.get('demand_confidence'),
+        'agent_activity': state.get('agent_activity', {}),
+    }
+
+
+class SupplierOverride(BaseModel):
+    sku: str
+    supplier_id: str
+    supplier_name: str
+    unit_price: float
+    lead_time_days: int
+    score: float
+
+
+class ContinueRequest(BaseModel):
+    supplier_overrides: Optional[List[SupplierOverride]] = None
+
+
+@app.post('/pipeline/{run_id}/continue/{next_agent}')
+async def continue_pipeline(run_id: str, next_agent: str, request: ContinueRequest = None):
+    """Continue to the next agent one at a time."""
+    from agents.supplier_selector import supplier_selector_node
+    from agents.container_optimizer import container_optimizer_node
+    from agents.po_compiler import po_compiler_node
+
+    state = pipeline_states.get(run_id)
+    if not state:
+        raise HTTPException(status_code=404, detail='Run ID not found. Start a new pipeline first.')
+
+    # Inject user's supplier picks before container optimizer runs
+    if next_agent == 'container_optimizer' and request and request.supplier_overrides:
+        overrides_by_sku = {o.sku: o for o in request.supplier_overrides}
+        updated_selections = []
+        for sel in state.get('supplier_selections', []):
+            sku = sel['sku']
+            if sku in overrides_by_sku:
+                o = overrides_by_sku[sku]
+                updated_selections.append({
+                    **sel,
+                    'supplier_id': o.supplier_id,
+                    'supplier_name': o.supplier_name,
+                    'unit_price': o.unit_price,
+                    'lead_time_days': o.lead_time_days,
+                    'score': o.score,
+                    'rationale': f'Manually selected by planner: {o.supplier_name}',
+                })
+            else:
+                updated_selections.append(sel)
+        state['supplier_selections'] = updated_selections
+
+    agent_map = {
+        'supplier_selector':   supplier_selector_node,
+        'container_optimizer': container_optimizer_node,
+        'po_compiler':         po_compiler_node,
+    }
+
+    if next_agent not in agent_map:
+        raise HTTPException(status_code=400, detail=f'Unknown agent: {next_agent}')
+
+    state = agent_map[next_agent](state)
+    pipeline_states[run_id] = state
+
+    if state.get('error'):
+        raise HTTPException(status_code=500, detail=state['error'])
+
+    next_steps = {
+        'supplier_selector':   'container_optimizer',
+        'container_optimizer': 'po_compiler',
+        'po_compiler':         None,
+    }
+
+    response: dict = {
+        'run_id': run_id,
+        'agent': next_agent,
+        'status': 'done' if next_steps[next_agent] is None else 'awaiting_input',
+        'next_agent': next_steps[next_agent],
+        'agent_activity': state.get('agent_activity', {}),
+        'error': state.get('error'),
+    }
+
+    if next_agent == 'supplier_selector':
+        response['supplier_selections'] = state.get('supplier_selections', [])
+        response['supplier_rationale'] = state.get('supplier_rationale')
+        response['supplier_confidence'] = state.get('supplier_confidence')
+
+    elif next_agent == 'container_optimizer':
+        response['container_plan'] = state.get('container_plan')
+        response['container_rationale'] = state.get('container_rationale')
+        response['order_line_items'] = state.get('order_line_items', [])
+
+    elif next_agent == 'po_compiler':
+        response['po_number'] = state.get('po_number')
+        response['po_total_usd'] = state.get('po_total_usd')
+        response['po_rationale'] = state.get('po_rationale')
+        response['approval_status'] = state.get('approval_status')
+
+    return response
