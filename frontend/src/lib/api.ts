@@ -16,8 +16,15 @@ export type NetRequirement = {
   in_transit: number;
   safety_stock: number;
   forecast_demand: number;
-  urgency: 'critical' | 'normal';
+  urgency: 'critical' | 'watch' | 'normal';
   moq: number;
+  // enriched fields
+  uf_qty_in?: number;
+  open_po_count?: number;
+  open_po_qty?: number;
+  need_by_date?: string;
+  sales_delta_pct?: number | null;
+  final_order_qty?: number;
 };
 
 export type SupplierCandidate = {
@@ -27,6 +34,9 @@ export type SupplierCandidate = {
   score: number;
   lead_time_days: number;
   moq_fit_pct?: number;
+  quality_score?: number;
+  delivery_performance?: number;
+  cost_rating?: number;
 };
 
 export type SupplierSelection = {
@@ -39,6 +49,10 @@ export type SupplierSelection = {
   net_qty: number;
   urgency: string;
   rationale?: string;
+  concerns?: string[];
+  quality_score?: number;
+  delivery_performance?: number;
+  cost_rating?: number;
   all_candidates?: SupplierCandidate[];
   error?: string;
 };
@@ -74,11 +88,11 @@ export async function approvePO(
 }
 
 /** Step 1: Start pipeline — runs Demand Analyst only */
-export async function startPipeline(skus: string[], horizonMonths = 3) {
+export async function startPipeline(skus: string[], horizonMonths = 3, triggeredBy = 'planner') {
   const res = await fetch(`${BACKEND_URL}/pipeline/start`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ skus, horizon_months: horizonMonths, triggered_by: 'planner' }),
+    body: JSON.stringify({ skus, horizon_months: horizonMonths, triggered_by: triggeredBy }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data?.detail || 'Failed to start pipeline.');
@@ -123,6 +137,7 @@ export async function continueAgent(
     supplier_selections?: SupplierSelection[];
     supplier_rationale?: string;
     supplier_confidence?: number;
+    supplier_concerns?: string[];
     container_plan?: ContainerPlan;
     container_rationale?: string;
     order_line_items?: unknown[];

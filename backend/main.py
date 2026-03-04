@@ -348,6 +348,7 @@ async def continue_pipeline(run_id: str, next_agent: str, request: ContinueReque
         response['supplier_selections'] = state.get('supplier_selections', [])
         response['supplier_rationale'] = state.get('supplier_rationale')
         response['supplier_confidence'] = state.get('supplier_confidence')
+        response['supplier_concerns'] = state.get('supplier_concerns', [])
 
     elif next_agent == 'container_optimizer':
         response['container_plan'] = state.get('container_plan')

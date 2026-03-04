@@ -22,9 +22,10 @@ class PipelineState(TypedDict, total=False):
     demand_confidence: float
 
     # ── Agent 2: Supplier Selector ────────────────────────────
-    supplier_selections: List[Dict[str, Any]]  # {sku, supplier_id, score, rationale}
+    supplier_selections: List[Dict[str, Any]]  # {sku, supplier_id, score, rationale, concerns}
     supplier_rationale: str
     supplier_confidence: float
+    supplier_concerns: List[str]
 
     # ── Agent 3: Container Optimizer ─────────────────────────
     order_line_items: List[Dict[str, Any]]     # {sku, supplier_id, qty, unit_price}

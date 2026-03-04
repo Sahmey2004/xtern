@@ -10,6 +10,7 @@ import {
   type ContainerPlan,
   type AgentActivityEntry,
 } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 const SAMPLE_SKUS = ['FLT-001', 'FLT-002', 'ENG-001', 'ELC-001', 'GSK-001'];
 
@@ -42,7 +43,46 @@ const stepIndexMap: Record<Step, number> = {
   done: 4, error: -1,
 };
 
+const URGENCY_COLOR = {
+  critical: 'var(--accent-red)',
+  watch: 'var(--accent-amber)',
+  normal: 'var(--accent-green)',
+};
+
+const URGENCY_GLOW = {
+  critical: 'rgba(239,68,68,0.15)',
+  watch: 'rgba(245,158,11,0.15)',
+  normal: 'rgba(16,185,129,0.15)',
+};
+
+function MetricChip({ label, value, accent }: { label: string; value: string; accent: string }) {
+  return (
+    <div style={{
+      padding: '3px 10px',
+      borderRadius: 100,
+      border: `1px solid ${accent}40`,
+      background: `${accent}12`,
+      fontSize: 11,
+      color: accent,
+      fontWeight: 600,
+      whiteSpace: 'nowrap' as const,
+    }}>
+      {label}: {value}
+    </div>
+  );
+}
+
+function ScoreBar({ value, max = 100, color }: { value: number; max?: number; color: string }) {
+  const pct = Math.min(100, (value / max) * 100);
+  return (
+    <div style={{ flex: 1, height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
+      <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 2 }} />
+    </div>
+  );
+}
+
 export default function PipelinePage() {
+  const { displayName } = useAuth();
   const [selectedSkus, setSelectedSkus] = useState<string[]>([]);
   const [customSku, setCustomSku] = useState('');
   const [horizon, setHorizon] = useState(3);
@@ -53,6 +93,7 @@ export default function PipelinePage() {
   const [demandRationale, setDemandRationale] = useState('');
   const [supplierSelections, setSupplierSelections] = useState<SupplierSelection[]>([]);
   const [supplierRationale, setSupplierRationale] = useState('');
+  const [supplierConcerns, setSupplierConcerns] = useState<string[]>([]);
   const [supplierPicks, setSupplierPicks] = useState<Record<string, SupplierSelection>>({});
   const [containerPlan, setContainerPlan] = useState<ContainerPlan | null>(null);
   const [containerRationale, setContainerRationale] = useState('');
@@ -75,7 +116,7 @@ export default function PipelinePage() {
     setStep('running_demand');
     setError(null);
     try {
-      const data = await startPipeline(selectedSkus, horizon);
+      const data = await startPipeline(selectedSkus, horizon, displayName || 'planner');
       setRunId(data.run_id);
       setNetRequirements(data.net_requirements);
       setDemandRationale(data.demand_rationale);
@@ -94,6 +135,7 @@ export default function PipelinePage() {
       const data = await continueAgent(runId, 'supplier_selector');
       setSupplierSelections(data.supplier_selections || []);
       setSupplierRationale(data.supplier_rationale || '');
+      setSupplierConcerns(data.supplier_concerns || []);
       setAgentActivity(prev => ({ ...prev, ...data.agent_activity }));
       const defaults: Record<string, SupplierSelection> = {};
       for (const sel of data.supplier_selections || []) {
@@ -150,7 +192,7 @@ export default function PipelinePage() {
   const handleApproval = async (action: 'approve' | 'reject') => {
     if (!poNumber) return;
     try {
-      await approvePO(poNumber, 'planner', '', action);
+      await approvePO(poNumber, displayName || 'planner', '', action);
       setApprovalStatus(action === 'approve' ? 'approved' : 'rejected');
       setStep('done');
     } catch (e: unknown) {
@@ -166,6 +208,7 @@ export default function PipelinePage() {
     setDemandRationale('');
     setSupplierSelections([]);
     setSupplierRationale('');
+    setSupplierConcerns([]);
     setSupplierPicks({});
     setContainerPlan(null);
     setContainerRationale('');
@@ -198,7 +241,6 @@ export default function PipelinePage() {
             Pipeline Configuration
           </h2>
 
-          {/* Horizon */}
           <div style={{ marginBottom: 20 }}>
             <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 8 }}>
               Planning Horizon
@@ -211,7 +253,6 @@ export default function PipelinePage() {
             </select>
           </div>
 
-          {/* SKU selection */}
           <div style={{ marginBottom: 24 }}>
             <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 8 }}>
               SKU Selection
@@ -319,14 +360,14 @@ export default function PipelinePage() {
         </div>
       )}
 
-      {/* Step 1 — Demand Analyst Results */}
+      {/* Step 1 — Demand Analyst Results (compact color-coded) */}
       {step === 'review_demand' && (
         <div className="card" style={{ padding: 24, marginBottom: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
             <div>
               <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>Demand Analyst Results</h2>
               {demandRationale && (
-                <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4, maxWidth: 600, lineHeight: 1.5 }}>
+                <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4, maxWidth: 600 }}>
                   {demandRationale}
                 </p>
               )}
@@ -336,33 +377,93 @@ export default function PipelinePage() {
             </span>
           </div>
 
-          <div style={{ overflowX: 'auto', borderRadius: 8, border: '1px solid var(--border)', marginBottom: 20 }}>
-            <table>
-              <thead>
-                <tr>
-                  {['SKU', 'Net Qty', 'Current Stock', 'In Transit', 'Safety Stock', 'Forecast Demand', 'Urgency'].map(h => (
-                    <th key={h}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {netRequirements.map(req => (
-                  <tr key={req.sku}>
-                    <td className="mono" style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{req.sku}</td>
-                    <td className="mono" style={{ fontWeight: 700, color: 'var(--accent-blue)' }}>{req.net_qty.toLocaleString()}</td>
-                    <td>{req.current_stock.toLocaleString()}</td>
-                    <td>{req.in_transit.toLocaleString()}</td>
-                    <td>{req.safety_stock.toLocaleString()}</td>
-                    <td>{req.forecast_demand.toLocaleString()}</td>
-                    <td>
-                      <span className={`badge ${req.urgency === 'critical' ? 'badge-red' : 'badge-amber'}`}>
-                        {req.urgency}
+          {/* Compact color-coded SKU list */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+            {netRequirements.map(req => {
+              const urgency = req.urgency as keyof typeof URGENCY_COLOR;
+              const urgColor = URGENCY_COLOR[urgency] || 'var(--accent-blue)';
+              const urgGlow = URGENCY_GLOW[urgency] || 'transparent';
+              const deltaVal = req.sales_delta_pct;
+              const deltaStr = deltaVal != null
+                ? `${deltaVal > 0 ? '↑' : '↓'}${Math.abs(deltaVal)}%`
+                : null;
+
+              return (
+                <div key={req.sku} style={{
+                  background: 'var(--bg-surface)',
+                  border: `1px solid var(--border)`,
+                  borderLeft: `3px solid ${urgColor}`,
+                  borderRadius: 8,
+                  padding: '12px 16px',
+                }}>
+                  {/* Line 1: urgency dot + main summary */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                    <div style={{
+                      width: 8, height: 8, borderRadius: '50%',
+                      background: urgColor,
+                      boxShadow: `0 0 6px ${urgColor}80`,
+                      flexShrink: 0,
+                    }} />
+                    <span className="mono" style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 13 }}>
+                      {req.sku}
+                    </span>
+                    <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>→</span>
+                    <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
+                      short by <strong style={{ color: urgColor }}>{req.net_qty.toLocaleString()}</strong> qty
+                    </span>
+                    <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>→</span>
+                    <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
+                      considering <strong>{req.safety_stock}</strong> safety stock already have
+                    </span>
+                    {req.need_by_date && req.need_by_date !== 'N/A' && (
+                      <>
+                        <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>→</span>
+                        <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
+                          need by <strong style={{ color: urgColor }}>{req.need_by_date}</strong>
+                        </span>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Line 2: metrics chips */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', paddingLeft: 18 }}>
+                    {req.uf_qty_in != null && (
+                      <MetricChip label="UF Qty In" value={req.uf_qty_in.toLocaleString()} accent="var(--accent-cyan)" />
+                    )}
+                    {deltaStr && (
+                      <MetricChip
+                        label="Sales"
+                        value={`${deltaStr} (past qtr)`}
+                        accent={deltaVal! > 0 ? 'var(--accent-green)' : 'var(--accent-amber)'}
+                      />
+                    )}
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>
+                      Safety: {req.safety_stock} → New Order: {req.net_qty} → Final: {req.final_order_qty ?? req.net_qty}
+                      {req.moq > 1 && <span style={{ color: 'var(--text-muted)' }}> (MOQ: {req.moq})</span>}
+                    </span>
+                  </div>
+
+                  {/* Line 3: open PO warning */}
+                  {(req.open_po_count ?? 0) > 0 && (
+                    <div style={{
+                      marginTop: 6,
+                      paddingLeft: 18,
+                      fontSize: 11,
+                      color: 'var(--accent-amber)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                    }}>
+                      <span>⚠</span>
+                      <span>
+                        {req.open_po_count} open PO{req.open_po_count! > 1 ? 's' : ''} already exist for this SKU
+                        ({req.open_po_qty?.toLocaleString()} qty on order)
                       </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           <button onClick={handleRunSupplier} className="btn-primary">
@@ -371,83 +472,163 @@ export default function PipelinePage() {
         </div>
       )}
 
-      {/* Step 2 — Supplier Selector Results */}
+      {/* Step 2 — Supplier Selector Results (primary + alternatives) */}
       {step === 'review_supplier' && (
         <div className="card" style={{ padding: 24, marginBottom: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
             <div>
               <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>Supplier Selector Results</h2>
               {supplierRationale && (
-                <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4, maxWidth: 600, lineHeight: 1.5 }}>
+                <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4, maxWidth: 600 }}>
                   {supplierRationale}
                 </p>
               )}
             </div>
             <span className="badge badge-green">Review &amp; pick suppliers</span>
           </div>
+
+          {/* Global concerns */}
+          {supplierConcerns.length > 0 && (
+            <div style={{
+              marginBottom: 16,
+              marginTop: 12,
+              padding: '10px 14px',
+              borderRadius: 8,
+              background: 'rgba(245,158,11,0.08)',
+              border: '1px solid rgba(245,158,11,0.25)',
+            }}>
+              <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent-amber)', marginBottom: 6 }}>
+                ⚠ Confidence Concerns
+              </p>
+              <ul style={{ margin: 0, paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                {supplierConcerns.map((c, i) => (
+                  <li key={i} style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{c}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
-            AI has recommended a supplier for each SKU. Use the dropdown to override any selection.
+            AI has recommended a primary supplier for each SKU. Click an alternative to switch.
           </p>
 
-          <div style={{ overflowX: 'auto', borderRadius: 8, border: '1px solid var(--border)', marginBottom: 20 }}>
-            <table>
-              <thead>
-                <tr>
-                  {['SKU', 'Qty', 'Urgency', 'Select Supplier', 'Unit Price', 'Lead Time', 'Score'].map(h => (
-                    <th key={h}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {supplierSelections.filter(s => s.supplier_id).map(sel => {
-                  const picked = supplierPicks[sel.sku] || sel;
-                  const candidates = sel.all_candidates || [];
-                  return (
-                    <tr key={sel.sku}>
-                      <td className="mono" style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{sel.sku}</td>
-                      <td className="mono">{sel.net_qty.toLocaleString()}</td>
-                      <td>
-                        <span className={`badge ${sel.urgency === 'critical' ? 'badge-red' : 'badge-amber'}`}>
-                          {sel.urgency}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 20 }}>
+            {supplierSelections.filter(s => s.supplier_id).map(sel => {
+              const picked = supplierPicks[sel.sku] || sel;
+              const candidates = sel.all_candidates || [];
+              const alternatives = candidates.filter(c => c.supplier_id !== picked.supplier_id);
+
+              return (
+                <div key={sel.sku} style={{
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 10,
+                  padding: 16,
+                }}>
+                  {/* SKU header */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                    <span className="mono" style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 13 }}>
+                      {sel.sku}
+                    </span>
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                      · {sel.net_qty.toLocaleString()} units
+                    </span>
+                    <span className={`badge ${sel.urgency === 'critical' ? 'badge-red' : sel.urgency === 'watch' ? 'badge-amber' : 'badge-green'}`}>
+                      {sel.urgency}
+                    </span>
+                  </div>
+
+                  {/* Primary supplier */}
+                  <div style={{
+                    background: 'rgba(59,130,246,0.06)',
+                    border: '1px solid rgba(59,130,246,0.25)',
+                    borderRadius: 8,
+                    padding: '12px 14px',
+                    marginBottom: alternatives.length > 0 ? 10 : 0,
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--accent-blue)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          Primary
                         </span>
-                      </td>
-                      <td>
-                        {candidates.length > 1 ? (
-                          <select
-                            value={picked.supplier_id || ''}
-                            onChange={e => {
-                              const chosen = candidates.find(c => c.supplier_id === e.target.value);
-                              if (chosen) setSupplierPicks(prev => ({ ...prev, [sel.sku]: { ...sel, ...chosen } }));
-                            }}
-                            style={{ fontSize: 12, padding: '4px 8px' }}
-                          >
-                            {candidates.map(c => (
-                              <option key={c.supplier_id} value={c.supplier_id}>
-                                {c.supplier_name} ({c.score})
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
-                            {picked.supplier_name}
-                          </span>
-                        )}
-                      </td>
-                      <td className="mono">${picked.unit_price?.toFixed(2)}</td>
-                      <td>{picked.lead_time_days}d</td>
-                      <td>
-                        <span className="mono" style={{
-                          fontWeight: 700,
-                          color: (picked.score || 0) >= 80 ? 'var(--accent-green)' : 'var(--accent-amber)',
-                        }}>
-                          {picked.score}/100
+                        <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
+                          {picked.supplier_name}
                         </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      </div>
+                      <span className="mono" style={{ fontWeight: 700, color: 'var(--accent-blue)', fontSize: 16 }}>
+                        {picked.score}/100
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                      <MetricChip label="Price" value={`$${picked.unit_price?.toFixed(2)}/unit`} accent="var(--accent-green)" />
+                      <MetricChip label="Lead" value={`${picked.lead_time_days}d`} accent="var(--accent-cyan)" />
+                      {picked.delivery_performance != null && (
+                        <MetricChip label="Delivery" value={`${picked.delivery_performance}%`} accent="var(--accent-green)" />
+                      )}
+                      {picked.quality_score != null && (
+                        <MetricChip label="Quality" value={`${picked.quality_score}%`} accent="var(--accent-purple)" />
+                      )}
+                      {picked.cost_rating != null && (
+                        <MetricChip label="Cost" value={`${picked.cost_rating}/100`} accent="var(--accent-amber)" />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Alternative suppliers */}
+                  {alternatives.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>Alternatives:</p>
+                      {alternatives.map(c => (
+                        <button
+                          key={c.supplier_id}
+                          onClick={() => setSupplierPicks(prev => ({
+                            ...prev,
+                            [sel.sku]: { ...sel, ...c },
+                          }))}
+                          style={{
+                            background: 'var(--bg-card)',
+                            border: '1px solid var(--border)',
+                            borderRadius: 7,
+                            padding: '9px 12px',
+                            cursor: 'pointer',
+                            textAlign: 'left' as const,
+                            transition: 'all 0.15s',
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.borderColor = 'rgba(59,130,246,0.4)';
+                            e.currentTarget.style.background = 'rgba(59,130,246,0.05)';
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.borderColor = 'var(--border)';
+                            e.currentTarget.style.background = 'var(--bg-card)';
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                              {c.supplier_name}
+                            </span>
+                            <span className="mono" style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                              {c.score}/100
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 5 }}>
+                            <MetricChip label="Price" value={`$${c.unit_price?.toFixed(2)}`} accent="var(--text-muted)" />
+                            <MetricChip label="Lead" value={`${c.lead_time_days}d`} accent="var(--text-muted)" />
+                            {c.delivery_performance != null && (
+                              <MetricChip label="Delivery" value={`${c.delivery_performance}%`} accent="var(--text-muted)" />
+                            )}
+                            {c.quality_score != null && (
+                              <MetricChip label="Quality" value={`${c.quality_score}%`} accent="var(--text-muted)" />
+                            )}
+                          </div>
+                          <p style={{ fontSize: 11, color: 'var(--accent-blue)', marginTop: 5 }}>Click to switch →</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           <button onClick={handleRunContainer} className="btn-primary">
