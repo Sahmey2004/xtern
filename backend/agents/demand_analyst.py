@@ -109,6 +109,7 @@ def demand_analyst_node(state: PipelineState) -> PipelineState:
 
     # ── Step 3: Check for open POs per SKU ───────────────────
     open_po_by_sku: dict = {}
+    open_po_check_error: str | None = None
     try:
         pos_data = call_mcp_tool('po', 'get_pos', {'status': 'all', 'limit': 50})
         for po in pos_data.get('purchase_orders', []):
@@ -120,8 +121,8 @@ def demand_analyst_node(state: PipelineState) -> PipelineState:
                             open_po_by_sku[sku] = {'count': 0, 'qty': 0}
                         open_po_by_sku[sku]['count'] += 1
                         open_po_by_sku[sku]['qty'] += line.get('qty_ordered', 0)
-    except Exception:
-        pass  # Open PO check is enrichment; don't fail pipeline
+    except Exception as exc:
+        open_po_check_error = str(exc)  # record but don't fail pipeline
 
     # ── Step 4: Calculate net requirements ───────────────────
     net_requirements = []
@@ -132,8 +133,13 @@ def demand_analyst_node(state: PipelineState) -> PipelineState:
         reorder_point = inv.get('reorder_point', safety)
         forecast = forecast_by_sku.get(sku, 0)
 
-        # Net need = forecast + safety - available (min 0)
-        net_qty = max(0, forecast + safety - available)
+        # Open PO info — looked up first so it can be deducted from net need
+        open_info = open_po_by_sku.get(sku, {'count': 0, 'qty': 0})
+        uf_qty_in = inv['in_transit'] + open_info['qty']
+
+        # Net need = forecast + safety - available - already_ordered (min 0)
+        # Deducting open_po_qty prevents re-ordering what's already been ordered but not yet shipped
+        net_qty = max(0, forecast + safety - available - open_info['qty'])
 
         # Apply MOQ floor from product data
         product_info = inv.get('products') or {}
@@ -171,10 +177,6 @@ def demand_analyst_node(state: PipelineState) -> PipelineState:
             prior_actual = history[-1]['actual_qty']
             if prior_actual > 0:
                 sales_delta_pct = round(((recent_actual - prior_actual) / prior_actual) * 100, 1)
-
-        # Open PO info
-        open_info = open_po_by_sku.get(sku, {'count': 0, 'qty': 0})
-        uf_qty_in = inv['in_transit'] + open_info['qty']
 
         if final_order_qty > 0:
             net_requirements.append({
@@ -312,6 +314,8 @@ Respond in JSON ONLY (one-line rationale, no paragraphs):
                 'net_requirements_count': len(net_requirements),
                 'sample_skus': [r['sku'] for r in net_requirements[:5]],
                 'horizon_months': horizon,
+                'open_po_skus_deducted': list(open_po_by_sku.keys()),
+                'open_po_check_error': open_po_check_error,
             },
         ),
     }

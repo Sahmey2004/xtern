@@ -257,12 +257,26 @@ async def start_pipeline(request: PipelineRunRequest):
     if state.get('error'):
         raise HTTPException(status_code=500, detail=state['error'])
 
+    net_requirements = state.get('net_requirements', [])
+    if not net_requirements:
+        activity = state.get('agent_activity', {})
+        deducted = (activity.get('DemandAnalyst') or {}).get('details', {}).get('open_po_skus_deducted', [])
+        if deducted:
+            detail = (
+                f'No new orders needed — existing open POs already cover all replenishment requirements '
+                f'for {len(deducted)} SKU(s): {", ".join(deducted[:5])}{"..." if len(deducted) > 5 else ""}. '
+                f'Approve or reject those POs before starting a new run.'
+            )
+        else:
+            detail = 'No SKUs need replenishment at this time.'
+        raise HTTPException(status_code=400, detail=detail)
+
     return {
         'run_id': run_id,
         'agent': 'demand_analyst',
         'status': 'awaiting_input',
         'next_agent': 'supplier_selector',
-        'net_requirements': state.get('net_requirements', []),
+        'net_requirements': net_requirements,
         'demand_rationale': state.get('demand_rationale'),
         'demand_confidence': state.get('demand_confidence'),
         'agent_activity': state.get('agent_activity', {}),

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   startPipeline,
   continueAgent,
@@ -102,6 +102,17 @@ export default function PipelinePage() {
   const [poRationale, setPoRationale] = useState('');
   const [agentActivity, setAgentActivity] = useState<Record<string, AgentActivityEntry>>({});
   const [approvalStatus, setApprovalStatus] = useState<string | null>(null);
+  const [existingDraftPos, setExistingDraftPos] = useState<{ po_number: string; total_usd: number }[]>([]);
+
+  useEffect(() => {
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+    fetch(`${backendUrl}/pipeline/pos?status=draft&limit=10`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.purchase_orders?.length) setExistingDraftPos(data.purchase_orders);
+      })
+      .catch(() => {});
+  }, [step]);
 
   const toggleSku = (sku: string) =>
     setSelectedSkus(prev => prev.includes(sku) ? prev.filter(s => s !== sku) : [...prev, sku]);
@@ -233,6 +244,27 @@ export default function PipelinePage() {
         </p>
       </div>
 
+      {/* Existing draft POs warning */}
+      {step === 'idle' && existingDraftPos.length > 0 && (
+        <div style={{
+          display: 'flex', gap: 12, alignItems: 'flex-start',
+          padding: '14px 18px', borderRadius: 10, marginBottom: 16,
+          background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.3)',
+        }}>
+          <span style={{ fontSize: 16, color: 'var(--accent-amber)', marginTop: 1 }}>⚠</span>
+          <div>
+            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent-amber)', marginBottom: 4 }}>
+              {existingDraftPos.length} draft PO{existingDraftPos.length > 1 ? 's' : ''} already exist
+            </p>
+            <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0 }}>
+              {existingDraftPos.map(p => `${p.po_number} ($${p.total_usd?.toLocaleString()})`).join(', ')}.{' '}
+              Starting a new pipeline will not re-order SKUs already covered. Review or approve existing POs first.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Config step */}
       {step === 'idle' && (
         <div className="card" style={{ padding: 24, marginBottom: 20 }}>
           <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 20 }}>

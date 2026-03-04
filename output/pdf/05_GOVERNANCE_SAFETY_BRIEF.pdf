@@ -1,0 +1,352 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+2 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+4 0 obj
+<< /Length 4883 >>
+stream
+0.95 0.97 1 rg
+0 742 612 50 re f
+0.12 0.16 0.22 rg
+BT /F2 12 Tf 1 0 0 1 54.00 759.00 Tm (ProcureAI Deliverables) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 24 Tf 1 0 0 1 54.00 724.00 Tm (05 GOVERNANCE SAFETY BRIEF) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 11 Tf 1 0 0 1 54.00 691.60 Tm (Generated from 05_GOVERNANCE_SAFETY_BRIEF.md) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 669.30 Tm (Includes: 10-minute pitch guide, technical design, governance and safety brief, business) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 654.80 Tm (sketch, and pilot plan.) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 16 Tf 1 0 0 1 54.00 618.30 Tm (05 GOVERNANCE SAFETY BRIEF) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 16 Tf 1 0 0 1 54.00 584.90 Tm (ProcureAI Governance and Safety Brief \(1 page\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 13 Tf 1 0 0 1 54.00 548.50 Tm (Purpose) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 522.95 Tm (This brief defines governance controls for ProcureAI's current multi-agent PO drafting workflow) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 508.45 Tm (and highlights where controls already exist versus where hardening is required for) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 493.95 Tm (pilot/production.) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 13 Tf 1 0 0 1 54.00 468.45 Tm (Security Posture Summary) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 442.90 Tm (Authentication: Supabase Auth with email + password. JWTs issued per session; roles stored in) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 428.40 Tm (user_metadata.role.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 408.90 Tm (Session storage: Sessions are persisted as HTTP cookies \(via @supabase/ssr\), not localStorage.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 394.40 Tm (This allows Next.js edge middleware to enforce route access on the server side before any page) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 379.90 Tm (is rendered.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 360.40 Tm (Encryption in transit: All client-to-Supabase traffic uses HTTPS \(TLS 1.2+ enforced by Supabase) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 345.90 Tm (infrastructure\). All backend-to-OpenAI API calls use HTTPS. There is no plaintext network path) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 331.40 Tm (in the data flow.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 311.90 Tm (Secrets classification:) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 297.40 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 297.40 Tm (`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` - safe for browser exposure;) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 282.90 Tm (the anon key is scoped by RLS policies in production) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 268.40 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 268.40 Tm (`SUPABASE_SERVICE_ROLE_KEY` and `OPENAI_API_KEY` - backend-only; never sent to the client;) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 253.90 Tm (loaded from `.env` files excluded from version control) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 239.40 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 239.40 Tm (No secrets are hardcoded in source files) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 219.90 Tm (Demo compromises \(clearly scoped to demo environment\):) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 205.40 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 205.40 Tm (Supabase RLS is disabled for all tables in the demo schema to simplify seeding and querying) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 190.90 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 190.90 Tm (Backend API endpoints do not independently verify JWT or role; access control relies on) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 176.40 Tm (frontend middleware) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 161.90 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 161.90 Tm (These are explicitly acknowledged limitations, not oversights) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 13 Tf 1 0 0 1 54.00 136.40 Tm (1\) Human-in-the-Loop Rules) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 110.85 Tm (Current implemented rules:) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 96.35 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 96.35 Tm (Pipeline runs in staged steps, requiring user confirmation between agents.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 81.85 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 81.85 Tm (Planner can override supplier choice before logistics/PO compilation.) Tj ET
+0.94 0.96 0.99 rg
+0 0 612 40 re f
+0.12 0.16 0.22 rg
+BT /F1 9 Tf 1 0 0 1 54.00 26.00 Tm (Generated from repository deliverables) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 9 Tf 1 0 0 1 508.00 26.00 Tm (Page 1) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Length 6596 >>
+stream
+0.95 0.97 1 rg
+0 742 612 50 re f
+0.12 0.16 0.22 rg
+BT /F2 12 Tf 1 0 0 1 54.00 759.00 Tm (ProcureAI Deliverables) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 724.00 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 724.00 Tm (Final business action \(PO approval/rejection\) is explicit and human-triggered.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 704.50 Tm (Required operational policy:) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 690.00 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 690.00 Tm (No PO should be treated as committed until explicit human action is recorded.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 675.50 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 675.50 Tm (Human reviewers must verify quantity reasonableness, supplier suitability, freight) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 661.00 Tm (reasonableness, and exceptions \(open PO overlap, urgent stockout risk\).) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 641.50 Tm (Escalation thresholds \(recommended\):) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 627.00 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 627.00 Tm (Confidence < 0.70 from any agent: mandatory manager review note) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 612.50 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 612.50 Tm (High-value PO \(threshold set by business\): mandatory dual approval) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 598.00 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 598.00 Tm (Supplier switch from preferred contract vendor: mandatory rationale note) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 13 Tf 1 0 0 1 54.00 572.50 Tm (2\) Audit and Traceability Strategy) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 546.95 Tm (Current traceability:) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 532.45 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 532.45 Tm (Every agent writes an entry into `decision_log` with inputs, outputs, confidence, rationale,) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 517.95 Tm (timestamp, and run reference.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 503.45 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 503.45 Tm (PO header and line items persist with approver identity/timestamp fields.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 483.95 Tm (Minimum audit standard for pilot:) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 469.45 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 469.45 Tm (Every approved/rejected PO should allow reconstruction of who initiated the run, what each) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 454.95 Tm (agent decided, what user overrides occurred, and who approved/rejected with timestamp.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 435.45 Tm (Recommended additions:) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 420.95 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 420.95 Tm (Correlation ID propagation from UI request to all downstream logs) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 406.45 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 406.45 Tm (Immutable event stream copy \(append-only\) for forensic review) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 391.95 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 391.95 Tm (Automated daily audit digest for policy exceptions) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 13 Tf 1 0 0 1 54.00 366.45 Tm (3\) Data Handling Assumptions) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 340.90 Tm (Assumptions in current implementation:) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 326.40 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 326.40 Tm (Data is operational procurement data \(inventory, forecast, supplier scoring, PO records\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 311.90 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 311.90 Tm (Demo environment uses Supabase service role and disabled RLS) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 297.40 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 297.40 Tm (LLM prompts/responses may include operational fields and are logged) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 277.90 Tm (Data handling policy for pilot:) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 263.40 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 263.40 Tm (Restrict prompts to minimum required operational fields \(data minimization\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 248.90 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 248.90 Tm (Avoid sending sensitive supplier contract terms unless required) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 234.40 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 234.40 Tm (Maintain environment-level separation \(dev/stage/pilot\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 219.90 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 219.90 Tm (Apply retention policy to decision logs and PO notes) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 13 Tf 1 0 0 1 54.00 194.40 Tm (4\) Fail-Safe Behaviors) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 168.85 Tm (Current fail-safe behaviors:) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 154.35 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 154.35 Tm (Agent exceptions stop progression and surface explicit error) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 139.85 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 139.85 Tm (Missing prerequisites short-circuit downstream stages) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 125.35 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 125.35 Tm (Supplier open-PO context enriches demand stage to reduce duplicate ordering risk) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 105.85 Tm (Required fail-safe policy:) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 91.35 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 91.35 Tm (On tool failure \(MCP/DB/LLM\), default to "no commit" path) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 76.85 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 76.85 Tm (On confidence/validation anomalies, force manual review checkpoint) Tj ET
+0.94 0.96 0.99 rg
+0 0 612 40 re f
+0.12 0.16 0.22 rg
+BT /F1 9 Tf 1 0 0 1 54.00 26.00 Tm (Generated from repository deliverables) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 9 Tf 1 0 0 1 508.00 26.00 Tm (Page 2) Tj ET
+endstream
+endobj
+6 0 obj
+<< /Length 2928 >>
+stream
+0.95 0.97 1 rg
+0 742 612 50 re f
+0.12 0.16 0.22 rg
+BT /F2 12 Tf 1 0 0 1 54.00 759.00 Tm (ProcureAI Deliverables) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 724.00 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 724.00 Tm (On persistence failure, do not allow state transition to approved) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 709.50 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 709.50 Tm (Keep retry actions explicit and operator-driven) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 13 Tf 1 0 0 1 54.00 684.00 Tm (Governance Risks and Mitigations) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 658.45 Tm (Top observed risks:) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 643.95 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 643.95 Tm (Backend authorization is not enforced independently of frontend route protection.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 629.45 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 629.45 Tm (RLS is disabled in schema for demo convenience.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 614.95 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 614.95 Tm (In-memory run state can be lost on process restart.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 600.45 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 600.45 Tm (Approval and total-value controls can be inconsistent \(pipeline approval action broadly) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 585.95 Tm (reachable; PO header total currently excludes freight estimate\).) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 566.45 Tm (Immediate mitigations before pilot:) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 551.95 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 551.95 Tm (Enforce backend JWT + role authorization on all PO and log endpoints) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 537.45 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 537.45 Tm (Enable RLS with least-privilege policies) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 522.95 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 522.95 Tm (Persist pipeline run state in durable storage) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 13 Tf 1 0 0 1 54.00 497.45 Tm (Bottom Line) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 471.90 Tm (ProcureAI already has strong governance primitives for a hackathon system \(human gate, trace) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 457.40 Tm (logs, stage-by-stage review\). To be pilot-ready, the priority is security enforcement at the) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 442.90 Tm (backend and durable state/control guarantees.) Tj ET
+0.94 0.96 0.99 rg
+0 0 612 40 re f
+0.12 0.16 0.22 rg
+BT /F1 9 Tf 1 0 0 1 54.00 26.00 Tm (Generated from repository deliverables) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 9 Tf 1 0 0 1 508.00 26.00 Tm (Page 3) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Type /Pages /Kids [8 0 R 9 0 R 10 0 R] /Count 3 >>
+endobj
+8 0 obj
+<< /Type /Page /Parent 7 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 4 0 R >>
+endobj
+9 0 obj
+<< /Type /Page /Parent 7 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 5 0 R >>
+endobj
+10 0 obj
+<< /Type /Page /Parent 7 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 6 0 R >>
+endobj
+11 0 obj
+<< /Type /Catalog /Pages 7 0 R >>
+endobj
+xref
+0 12
+0000000000 65535 f 
+0000000015 00000 n 
+0000000085 00000 n 
+0000000160 00000 n 
+0000000228 00000 n 
+0000005163 00000 n 
+0000011811 00000 n 
+0000014791 00000 n 
+0000014861 00000 n 
+0000015007 00000 n 
+0000015153 00000 n 
+0000015300 00000 n 
+trailer
+<< /Size 12 /Root 11 0 R >>
+startxref
+15350
+%%EOF

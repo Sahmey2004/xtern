@@ -1,0 +1,808 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+2 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+4 0 obj
+<< /Length 4666 >>
+stream
+0.95 0.97 1 rg
+0 742 612 50 re f
+0.12 0.16 0.22 rg
+BT /F2 12 Tf 1 0 0 1 54.00 759.00 Tm (ProcureAI Deliverables) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 24 Tf 1 0 0 1 54.00 724.00 Tm (01 10 MIN PITCH GUIDE) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 11 Tf 1 0 0 1 54.00 691.60 Tm (Generated from 01_10_MIN_PITCH_GUIDE.md) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 669.30 Tm (Includes: 10-minute pitch guide, technical design, governance and safety brief, business) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 654.80 Tm (sketch, and pilot plan.) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 16 Tf 1 0 0 1 54.00 618.30 Tm (01 10 MIN PITCH GUIDE) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 16 Tf 1 0 0 1 54.00 584.90 Tm (ProcureAI 10-Minute Pitch and Live Demo Guide) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 554.50 Tm (This guide gives you a complete 10-minute live pitch script for the current codebase.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 540.00 Tm (It is aligned to the required sections:) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 525.50 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 525.50 Tm (Problem framing and imagined use case) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 511.00 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 511.00 Tm (User roles and agent roles) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 496.50 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 496.50 Tm (Technical architecture) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 482.00 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 482.00 Tm (Key decisions and limitations) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 467.50 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 467.50 Tm (Expected business impact) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 13 Tf 1 0 0 1 54.00 442.00 Tm (1\) Talk Track at a Glance \(10:00 total\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 416.45 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 416.45 Tm (`00:00-00:45` Opening and problem framing) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 401.95 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 401.95 Tm (`00:45-02:00` Imagined use case and why now) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 387.45 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 387.45 Tm (`02:00-03:00` User roles and responsibilities) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 372.95 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 372.95 Tm (`03:00-05:00` Agent roles and orchestration) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 358.45 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 358.45 Tm (`05:00-06:30` Technical architecture and MCP flow) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 343.95 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 343.95 Tm (`06:30-08:00` Key design decisions and current limitations) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 329.45 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 329.45 Tm (`08:00-09:15` Expected business impact \(KPIs/ROI assumptions\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 314.95 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 314.95 Tm (`09:15-10:00` Close and Q&A buffer) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 13 Tf 1 0 0 1 54.00 289.45 Tm (2\) Slide-by-Slide Script) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 13 Tf 1 0 0 1 54.00 257.90 Tm (Slide 1 - Title and One-Line Value Proposition \(`00:00-00:45`\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 232.35 Tm (What to say) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 217.85 Tm ("ProcureAI is a multi-agent purchase-order drafting system for supply chain teams. It turns) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 203.35 Tm (fragmented inventory, forecast, supplier, and logistics data into a reviewable draft PO, while) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 188.85 Tm (keeping a human approval gate.") Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 169.35 Tm (Key point) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 154.85 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 154.85 Tm (This is decision support plus orchestration, not full autonomous procurement.) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 13 Tf 1 0 0 1 54.00 129.35 Tm (Slide 2 - Problem Framing \(`00:45-01:30`\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 103.80 Tm (What to say) Tj ET
+0.94 0.96 0.99 rg
+0 0 612 40 re f
+0.12 0.16 0.22 rg
+BT /F1 9 Tf 1 0 0 1 54.00 26.00 Tm (Generated from repository deliverables) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 9 Tf 1 0 0 1 508.00 26.00 Tm (Page 1) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Length 6246 >>
+stream
+0.95 0.97 1 rg
+0 742 612 50 re f
+0.12 0.16 0.22 rg
+BT /F2 12 Tf 1 0 0 1 54.00 759.00 Tm (ProcureAI Deliverables) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 724.00 Tm ("In many operations teams, planners still bounce between ERP screens, spreadsheets, and emails) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 709.50 Tm (to decide what to order, from whom, and how to ship. That process is slow, inconsistent, and) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 695.00 Tm (hard to audit.") Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 675.50 Tm (Concrete pain points) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 661.00 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 661.00 Tm (Slow PO cycle time \(manual data gathering + approvals\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 646.50 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 646.50 Tm (Human error risk \(wrong quantity/supplier, duplicate ordering\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 632.00 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 632.00 Tm (Limited decision traceability \(hard to reconstruct why decisions were made\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 13 Tf 1 0 0 1 54.00 606.50 Tm (Slide 3 - Imagined Use Case \(`01:30-02:00`\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 580.95 Tm (Scenario narrative) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 566.45 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 566.45 Tm (A planner starts the pipeline for low-stock SKUs.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 551.95 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 551.95 Tm (The system calculates net requirements over a selected horizon.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 537.45 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 537.45 Tm (It ranks suppliers per SKU using weighted criteria.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 522.95 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 522.95 Tm (It estimates container utilization/freight.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 508.45 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 508.45 Tm (It compiles a draft PO and records all decisions.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 493.95 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 493.95 Tm (A human reviews and approves or rejects.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 474.45 Tm (Open-PO duplicate detection \(call out explicitly\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 459.95 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 459.95 Tm (Before computing net quantities, Agent 1 cross-references all open/draft POs for the same) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 445.45 Tm (SKUs.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 430.95 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 430.95 Tm (If a SKU already has pending orders, it surfaces a warning so the planner avoids) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 416.45 Tm (double-ordering - a safeguard that manual spreadsheet processes frequently miss.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 396.95 Tm (Business context in this repo) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 382.45 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 382.45 Tm (Seeded data models industrial diesel/engine parts categories \(`filters`, `gaskets`,) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 367.95 Tm (`engine_parts`, `electrical`\) with realistic MOQ/weight/volume/lead-time patterns.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 353.45 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 353.45 Tm (Codebase is branded **Cummins Xtern 2026**, matching the industrial engine component) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 338.95 Tm (context.) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 13 Tf 1 0 0 1 54.00 313.45 Tm (Slide 4 - User Roles \(`02:00-03:00`\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 287.90 Tm (User roles in implementation) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 273.40 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 273.40 Tm (`po_manager`) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 258.90 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 258.90 Tm (Runs pipeline) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 244.40 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 244.40 Tm (Reviews intermediate outputs) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 229.90 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 229.90 Tm (Can adjust supplier choices before container optimization) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 215.40 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 215.40 Tm (Can trigger approve/reject from the pipeline page in current implementation) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 200.90 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 200.90 Tm (`administrator`) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 186.40 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 186.40 Tm (Everything above) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 171.90 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 171.90 Tm (Access to approval queue and decision logs pages) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 152.40 Tm (Role mechanism in app) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 137.90 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 137.90 Tm (Role value comes from Supabase Auth `user_metadata.role`) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 123.40 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 123.40 Tm (Frontend middleware restricts `/approvals` and `/logs` to `administrator`) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 13 Tf 1 0 0 1 54.00 97.90 Tm (Slide 5 - Agent Roles and Decision Boundaries \(`03:00-05:00`\)) Tj ET
+0.94 0.96 0.99 rg
+0 0 612 40 re f
+0.12 0.16 0.22 rg
+BT /F1 9 Tf 1 0 0 1 54.00 26.00 Tm (Generated from repository deliverables) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 9 Tf 1 0 0 1 508.00 26.00 Tm (Page 2) Tj ET
+endstream
+endobj
+6 0 obj
+<< /Length 6488 >>
+stream
+0.95 0.97 1 rg
+0 742 612 50 re f
+0.12 0.16 0.22 rg
+BT /F2 12 Tf 1 0 0 1 54.00 759.00 Tm (ProcureAI Deliverables) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 724.00 Tm (Agent 1: DemandAnalyst) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 709.50 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 709.50 Tm (Pulls inventory + forecasts + open PO context via MCP) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 695.00 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 695.00 Tm (Calculates net need = forecast + safety stock - available inventory) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 680.50 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 680.50 Tm (Applies MOQ floor and urgency tier \(`critical/watch/normal`\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 666.00 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 666.00 Tm (Adds need-by date and demand trend signals) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 646.50 Tm (Agent 2: SupplierSelector) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 632.00 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 632.00 Tm (Calls supplier scoring MCP tool per SKU) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 617.50 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 617.50 Tm (Uses category-specific weights \(quality, delivery, lead time, cost\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 603.00 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 603.00 Tm (Returns recommended supplier + alternatives) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 588.50 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 588.50 Tm (User can override selected supplier before next step) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 569.00 Tm (Agent 3: ContainerOptimizer) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 554.50 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 554.50 Tm (Pulls product weight/CBM) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 540.00 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 540.00 Tm (Calls logistics MCP tool for container plan) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 525.50 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 525.50 Tm (Outputs container type/count, utilization, and freight estimate) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 506.00 Tm (Agent 4: POCompiler) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 491.50 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 491.50 Tm (Assembles line items and totals) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 477.00 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 477.00 Tm (Writes draft PO + line items to persistent store) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 462.50 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 462.50 Tm (Generates summary note and logs final decision) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 443.00 Tm (Orchestration style) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 428.50 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 428.50 Tm (Step-by-step, human-in-the-loop progression \(`/pipeline/start` then) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 414.00 Tm (`/pipeline/{run_id}/continue/{agent}`\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 399.50 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 399.50 Tm (Early-stop on error or missing prerequisites) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 13 Tf 1 0 0 1 54.00 374.00 Tm (Slide 6 - Technical Architecture \(`05:00-06:30`\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 348.45 Tm (Frontend) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 333.95 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 333.95 Tm (Next.js app for dashboard, pipeline, approvals, logs, supplier/data views) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 319.45 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 319.45 Tm (Supabase Auth and role-aware navigation) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 299.95 Tm (Backend) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 285.45 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 285.45 Tm (FastAPI API orchestrates agent execution) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 270.95 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 270.95 Tm (Python MCP client invokes Node MCP servers over stdio JSON-RPC) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 251.45 Tm (MCP servers \(4, totaling 14 tools\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 236.95 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 236.95 Tm (ERP data server \(`get_inventory`, `get_products`, `get_forecasts`\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 222.45 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 222.45 Tm (Supplier data server \(`get_suppliers`, `get_supplier_products`, `score_suppliers`\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 207.95 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 207.95 Tm (Logistics server \(`get_container_specs`, `calculate_container_plan`\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 193.45 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 193.45 Tm (PO management server \(`create_draft_po`, `get_pos`, `update_po_status`, `log_decision`,) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 178.95 Tm (`get_decision_log`\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 159.45 Tm (Persistence) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 144.95 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 144.95 Tm (Supabase/PostgreSQL tables for products, suppliers, forecasts, inventory, POs, PO lines,) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 130.45 Tm (decision logs) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 110.95 Tm (Data transparency page \(/data\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 96.45 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 96.45 Tm (Accessible to both roles; shows live Inventory and Products tabs with sortable/searchable) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 81.95 Tm (columns) Tj ET
+0.94 0.96 0.99 rg
+0 0 612 40 re f
+0.12 0.16 0.22 rg
+BT /F1 9 Tf 1 0 0 1 54.00 26.00 Tm (Generated from repository deliverables) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 9 Tf 1 0 0 1 508.00 26.00 Tm (Page 3) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Length 6547 >>
+stream
+0.95 0.97 1 rg
+0 742 612 50 re f
+0.12 0.16 0.22 rg
+BT /F2 12 Tf 1 0 0 1 54.00 759.00 Tm (ProcureAI Deliverables) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 724.00 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 724.00 Tm (Inventory tab includes status color-coding \(Critical / Watch / OK\) matching the demand) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 709.50 Tm (agent's urgency logic) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 13 Tf 1 0 0 1 54.00 684.00 Tm (Slide 7 - Key Decisions and Current Limitations \(`06:30-08:00`\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 658.45 Tm (Key decisions) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 643.95 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 643.95 Tm (Keep agent responsibilities narrow and separable) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 629.45 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 629.45 Tm (Force tool access through MCP layer \(not direct DB access from agents\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 614.95 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 614.95 Tm (Keep a mandatory human review path before final operational action) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 600.45 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 600.45 Tm (Persist per-agent decision rationale and confidence for auditability) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 580.95 Tm (Current limitations to acknowledge clearly) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 566.45 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 566.45 Tm (`pipeline_states` are in-memory in FastAPI \(not durable across backend restart\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 551.95 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 551.95 Tm (Backend endpoints do not perform their own auth/authorization checks; access control is) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 537.45 Tm (mainly frontend/middleware enforced) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 522.95 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 522.95 Tm (Supabase RLS is disabled in schema for demo mode) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 508.45 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 508.45 Tm (MCP calls spawn a new Node process per tool invocation \(simpler, but adds latency\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 493.95 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 493.95 Tm (Approval status flow includes `pending_approval` in schema/tooling, but current path often) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 479.45 Tm (goes from `draft` directly to approve/reject) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 464.95 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 464.95 Tm (PO header `total_usd` persistence currently excludes estimated freight, while pipeline) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 450.45 Tm (summary includes freight in computed total) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 13 Tf 1 0 0 1 54.00 424.95 Tm (Slide 8 - Expected Business Impact \(`08:00-09:15`\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 399.40 Tm (Positioning) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 384.90 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 384.90 Tm (These are expected outcomes from process design, not production-validated metrics yet.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 365.40 Tm (Expected KPI directions) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 350.90 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 350.90 Tm (Lower PO draft cycle time) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 336.40 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 336.40 Tm (More consistent supplier selection logic) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 321.90 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 321.90 Tm (Improved review confidence through rationale + confidence + full log trail) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 307.40 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 307.40 Tm (Reduced manual reconciliation effort for audit/review) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 287.90 Tm (Sample KPI set for discussion) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 273.40 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 273.40 Tm (PO cycle time \(request-to-draft\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 258.90 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 258.90 Tm (Planner touches per PO) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 244.40 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 244.40 Tm (% POs requiring rework) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 229.90 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 229.90 Tm (Supplier selection consistency against policy) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 215.40 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 215.40 Tm (Approval turnaround time) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 195.90 Tm (TCO angle \(bonus framing\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 181.40 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 181.40 Tm (Container optimization selects the container type that maximizes binding utilisation \(max of) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 166.90 Tm (weight vs volume fill\), directly reducing wasted freight spend.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 152.40 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 152.40 Tm (The system surfaces landed cost per unit \(unit price + apportioned freight\) so planners see) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 137.90 Tm (the true sourcing cost - not just unit price.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 123.40 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 123.40 Tm (Choosing a 40ft container over two 20ft containers saves base freight cost and improves fill) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 108.90 Tm (rate visibility.) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 13 Tf 1 0 0 1 54.00 83.40 Tm (Slide 9 - Close \(`09:15-10:00`\)) Tj ET
+0.94 0.96 0.99 rg
+0 0 612 40 re f
+0.12 0.16 0.22 rg
+BT /F1 9 Tf 1 0 0 1 54.00 26.00 Tm (Generated from repository deliverables) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 9 Tf 1 0 0 1 508.00 26.00 Tm (Page 4) Tj ET
+endstream
+endobj
+8 0 obj
+<< /Length 6046 >>
+stream
+0.95 0.97 1 rg
+0 742 612 50 re f
+0.12 0.16 0.22 rg
+BT /F2 12 Tf 1 0 0 1 54.00 759.00 Tm (ProcureAI Deliverables) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 724.00 Tm (What to say) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 709.50 Tm ("ProcureAI demonstrates a practical AI pattern for operations: multiple specialized agents,) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 695.00 Tm (MCP-based tool grounding, persistent audit logs, and a human decision gate. The next step is a) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 680.50 Tm (tightly scoped pilot with hardened auth and measurable KPI tracking.") Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 661.00 Tm (---) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 13 Tf 1 0 0 1 54.00 635.50 Tm (3\) Live Demo Runbook \(If You Present with Product\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 609.95 Tm (This section is optional but recommended in a pitch.) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 13 Tf 1 0 0 1 54.00 584.45 Tm (Demo objective) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 563.90 Tm (Show one end-to-end run where the system:) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 549.40 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 549.40 Tm (Detects replenishment need) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 534.90 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 534.90 Tm (Recommends suppliers) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 520.40 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 520.40 Tm (Builds container plan) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 505.90 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 505.90 Tm (Creates draft PO) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 491.40 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 491.40 Tm (Logs each decision) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 13 Tf 1 0 0 1 54.00 465.90 Tm (Pre-demo checks \(before presenting\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 445.35 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 445.35 Tm (Backend running \(`/health` returns `ok`\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 430.85 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 430.85 Tm (Frontend running and login works) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 416.35 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 416.35 Tm (Supabase seeded) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 401.85 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 401.85 Tm (MCP server `dist/index.js` exists in all server folders \(built\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 387.35 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 387.35 Tm (OpenAI key configured \(for rationale generation\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 13 Tf 1 0 0 1 54.00 361.85 Tm (Suggested click path) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 341.30 Tm (1. ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 341.30 Tm (Login as `manager1@procurepilot.demo`) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 326.80 Tm (2. ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 326.80 Tm (Open `/data` first - show the Inventory tab, point to any Critical \(red\) SKU as the) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 312.30 Tm (motivation for this run) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 297.80 Tm (3. ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 297.80 Tm (Open `/pipeline`) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 283.30 Tm (4. ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 283.30 Tm (Start with empty SKU selection \(auto-select below reorder\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 268.80 Tm (5. ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 268.80 Tm (Review Demand Analyst output - call out urgency colors, need-by dates, and any open-PO) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 254.30 Tm (warnings) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 239.80 Tm (6. ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 239.80 Tm (Continue ? Supplier Selector output; override one supplier to demonstrate human-in-the-loop) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 225.30 Tm (control) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 210.80 Tm (7. ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 210.80 Tm (Continue ? Container Optimizer \(call out binding utilisation %, freight estimate\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 196.30 Tm (8. ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 196.30 Tm (Continue ? PO Compiler \(PO number, total value, status = draft\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 181.80 Tm (9. ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 181.80 Tm (Approve the draft from the pipeline view) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 167.30 Tm (10. ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 167.30 Tm (Log out; login as `admin@procurepilot.demo`; open `/logs` to show per-agent decision trace) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 152.80 Tm (with confidence scores and JSON inputs/outputs) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 13 Tf 1 0 0 1 54.00 127.30 Tm (What to call out live) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 106.75 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 106.75 Tm (Every agent output includes rationale/confidence) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 92.25 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 92.25 Tm (Supplier choices are not locked; planner can intervene) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 77.75 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 77.75 Tm (Every stage writes decision logs to persistent storage) Tj ET
+0.94 0.96 0.99 rg
+0 0 612 40 re f
+0.12 0.16 0.22 rg
+BT /F1 9 Tf 1 0 0 1 54.00 26.00 Tm (Generated from repository deliverables) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 9 Tf 1 0 0 1 508.00 26.00 Tm (Page 5) Tj ET
+endstream
+endobj
+9 0 obj
+<< /Length 3317 >>
+stream
+0.95 0.97 1 rg
+0 742 612 50 re f
+0.12 0.16 0.22 rg
+BT /F2 12 Tf 1 0 0 1 54.00 759.00 Tm (ProcureAI Deliverables) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 13 Tf 1 0 0 1 54.00 724.00 Tm (Fallback plan if live demo fails) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 703.45 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 703.45 Tm (Show architecture + flow diagram and walk through a previously generated run_id/PO example) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 688.95 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 688.95 Tm (Emphasize audit and governance mechanics over UI polish) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 669.45 Tm (---) Tj ET
+0.12 0.16 0.22 rg
+BT /F2 13 Tf 1 0 0 1 54.00 643.95 Tm (4\) Q&A Prep \(Likely Questions\)) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 618.40 Tm (Q: Is this autonomous procurement?) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 603.90 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 603.90 Tm (No. It drafts and recommends. Human review remains in control.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 584.40 Tm (Q: Why MCP instead of direct DB calls from each agent?) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 569.90 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 569.90 Tm (Standardized tool interface, cleaner separation of concerns, easier server-level governance.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 550.40 Tm (Q: What is production-hardening priority #1?) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 535.90 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 535.90 Tm (Backend auth enforcement + re-enabling RLS with role policies.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 516.40 Tm (Q: What proves value in a pilot?) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 501.90 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 501.90 Tm (Measured cycle time reduction, rework reduction, and approval throughput improvement.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 482.40 Tm (Q: Does the system optimize total cost, not just unit price?) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 467.90 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 467.90 Tm (Yes. Container optimization explicitly selects for highest binding utilisation to reduce) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 453.40 Tm (per-unit freight. The pipeline surfaces estimated freight as a line item so planners see the) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 438.90 Tm (full landed cost, not just unit price.) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 419.40 Tm (Q: Can scoring weights be changed without re-deploying code?) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 54.00 404.90 Tm (- ) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 404.90 Tm (Yes. Weights live in the `supplier_scoring_weights` table in Supabase, keyed by product) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 10 Tf 1 0 0 1 70.00 390.40 Tm (category. A procurement manager can update them directly without touching agent code.) Tj ET
+0.94 0.96 0.99 rg
+0 0 612 40 re f
+0.12 0.16 0.22 rg
+BT /F1 9 Tf 1 0 0 1 54.00 26.00 Tm (Generated from repository deliverables) Tj ET
+0.12 0.16 0.22 rg
+BT /F1 9 Tf 1 0 0 1 508.00 26.00 Tm (Page 6) Tj ET
+endstream
+endobj
+10 0 obj
+<< /Type /Pages /Kids [11 0 R 12 0 R 13 0 R 14 0 R 15 0 R 16 0 R] /Count 6 >>
+endobj
+11 0 obj
+<< /Type /Page /Parent 10 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 4 0 R >>
+endobj
+12 0 obj
+<< /Type /Page /Parent 10 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 5 0 R >>
+endobj
+13 0 obj
+<< /Type /Page /Parent 10 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 6 0 R >>
+endobj
+14 0 obj
+<< /Type /Page /Parent 10 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 7 0 R >>
+endobj
+15 0 obj
+<< /Type /Page /Parent 10 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 8 0 R >>
+endobj
+16 0 obj
+<< /Type /Page /Parent 10 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 9 0 R >>
+endobj
+17 0 obj
+<< /Type /Catalog /Pages 10 0 R >>
+endobj
+xref
+0 18
+0000000000 65535 f 
+0000000015 00000 n 
+0000000085 00000 n 
+0000000160 00000 n 
+0000000228 00000 n 
+0000004946 00000 n 
+0000011244 00000 n 
+0000017784 00000 n 
+0000024383 00000 n 
+0000030481 00000 n 
+0000033850 00000 n 
+0000033944 00000 n 
+0000034092 00000 n 
+0000034240 00000 n 
+0000034388 00000 n 
+0000034536 00000 n 
+0000034684 00000 n 
+0000034832 00000 n 
+trailer
+<< /Size 18 /Root 17 0 R >>
+startxref
+34883
+%%EOF
