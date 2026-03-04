@@ -187,7 +187,11 @@ Respond in JSON format ONLY:
         }
 
     try:
-        parsed = json.loads(response.content.strip().strip('```json').strip('```'))
+        raw = response.content.strip()
+        if raw.startswith('```'):
+            raw = raw.split('\n', 1)[-1]
+            raw = raw.rsplit('```', 1)[0].strip()
+        parsed = json.loads(raw)
         rationale = parsed.get('rationale', 'Demand calculated from forecast minus available stock.')
         confidence = float(parsed.get('confidence', 0.85))
     except Exception as exc:

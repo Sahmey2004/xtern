@@ -17,6 +17,13 @@ type LogEntry = {
 
 const AGENTS = ['All', 'DemandAnalyst', 'SupplierSelector', 'ContainerOptimizer', 'POCompiler'];
 
+const AGENT_COLORS: Record<string, string> = {
+  DemandAnalyst:      'badge-blue',
+  SupplierSelector:   'badge-purple',
+  ContainerOptimizer: 'badge-amber',
+  POCompiler:         'badge-green',
+};
+
 export default function LogsPage() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,112 +47,162 @@ export default function LogsPage() {
 
   const filtered = filter === 'All' ? logs : logs.filter(l => l.agent_name === filter);
 
-  const agentColor: Record<string, string> = {
-    DemandAnalyst:      'bg-blue-100 text-blue-800',
-    SupplierSelector:   'bg-purple-100 text-purple-800',
-    ContainerOptimizer: 'bg-orange-100 text-orange-800',
-    POCompiler:         'bg-green-100 text-green-800',
-  };
-
   return (
-    <div className="max-w-5xl">
-      <div className="flex items-center justify-between mb-6">
+    <div style={{ maxWidth: 1000 }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
         <div>
-          <h1 className="text-3xl font-bold mb-1">Decision Log</h1>
-          <p className="text-gray-500">Full audit trail — every agent action with inputs, outputs, and rationale.</p>
+          <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
+            Decision Log
+          </h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
+            Full audit trail — every agent action with inputs, outputs, and rationale.
+          </p>
         </div>
-        <button onClick={fetchLogs} className="border px-4 py-2 rounded text-sm hover:bg-gray-50">
+        <button onClick={fetchLogs} className="btn-outline" style={{ marginTop: 4 }}>
           Refresh
         </button>
       </div>
 
-      {/* Agent filter */}
-      <div className="flex gap-2 mb-6 flex-wrap">
-        {AGENTS.map(a => (
-          <button
-            key={a}
-            onClick={() => setFilter(a)}
-            className={`px-3 py-1 rounded-full text-sm border transition ${
-              filter === a ? 'bg-slate-800 text-white border-slate-800' : 'hover:border-gray-400'
-            }`}
-          >
-            {a}
-            {a !== 'All' && (
-              <span className="ml-1 text-xs opacity-70">
-                ({logs.filter(l => l.agent_name === a).length})
-              </span>
-            )}
-          </button>
-        ))}
+      {/* Filter pills */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
+        {AGENTS.map(a => {
+          const count = a === 'All' ? logs.length : logs.filter(l => l.agent_name === a).length;
+          const isActive = filter === a;
+          return (
+            <button
+              key={a}
+              onClick={() => setFilter(a)}
+              style={{
+                padding: '6px 14px',
+                borderRadius: 100,
+                fontSize: 12,
+                fontWeight: isActive ? 600 : 400,
+                border: `1px solid ${isActive ? 'var(--accent-blue)' : 'var(--border)'}`,
+                background: isActive ? 'var(--accent-blue-glow)' : 'transparent',
+                color: isActive ? 'var(--accent-blue)' : 'var(--text-muted)',
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+              }}
+            >
+              {a}
+              {count > 0 && (
+                <span style={{ marginLeft: 6, opacity: 0.7, fontSize: 11 }}>({count})</span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {loading ? (
-        <p className="text-gray-400">Loading…</p>
+        <div className="card" style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+          Loading decision log…
+        </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-8 text-center text-gray-400">
-          No log entries yet. <a href="/pipeline" className="text-blue-600 underline">Run a pipeline</a> to generate audit records.
+        <div className="card" style={{ padding: 40, textAlign: 'center' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 8 }}>
+            No log entries yet.
+          </p>
+          <a href="/pipeline" style={{ color: 'var(--accent-blue)', fontSize: 13, textDecoration: 'none' }}>
+            Run a pipeline to generate audit records →
+          </a>
         </div>
       ) : (
-        <div className="space-y-3">
-          {filtered.map(entry => (
-            <div key={entry.id} className="bg-white rounded-lg shadow overflow-hidden">
-              <div
-                className="flex items-start gap-4 p-4 cursor-pointer hover:bg-gray-50"
-                onClick={() => setExpandedId(expandedId === entry.id ? null : entry.id)}
-              >
-                {/* Confidence bar */}
-                <div className="flex flex-col items-center w-12 shrink-0">
-                  <div className="text-lg font-bold text-gray-700">
-                    {entry.confidence != null ? Math.round(entry.confidence * 100) : '—'}
-                  </div>
-                  <div className="text-xs text-gray-400">conf%</div>
-                  {entry.confidence != null && (
-                    <div className="w-full bg-gray-200 rounded-full h-1 mt-1">
-                      <div
-                        className="bg-blue-500 h-1 rounded-full"
-                        style={{ width: `${entry.confidence * 100}%` }}
-                      />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {filtered.map(entry => {
+            const isExpanded = expandedId === entry.id;
+            const confPct = entry.confidence != null ? Math.round(entry.confidence * 100) : null;
+            return (
+              <div key={entry.id} className="card" style={{ overflow: 'hidden' }}>
+                <div
+                  onClick={() => setExpandedId(isExpanded ? null : entry.id)}
+                  style={{
+                    display: 'flex', alignItems: 'flex-start', gap: 16,
+                    padding: '14px 18px', cursor: 'pointer',
+                  }}
+                >
+                  {/* Confidence */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 44, flexShrink: 0 }}>
+                    <div className="mono" style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>
+                      {confPct ?? '—'}
                     </div>
-                  )}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${agentColor[entry.agent_name] || 'bg-gray-100 text-gray-700'}`}>
-                      {entry.agent_name}
-                    </span>
-                    {entry.po_number && (
-                      <span className="text-xs text-gray-500 font-mono">{entry.po_number}</span>
+                    <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>conf%</div>
+                    {confPct != null && (
+                      <div style={{
+                        width: '100%', height: 3, background: 'var(--border)',
+                        borderRadius: 2, marginTop: 5, overflow: 'hidden',
+                      }}>
+                        <div style={{
+                          height: '100%', borderRadius: 2,
+                          width: `${confPct}%`,
+                          background: confPct >= 80 ? 'var(--accent-green)' : confPct >= 60 ? 'var(--accent-amber)' : 'var(--accent-red)',
+                        }} />
+                      </div>
                     )}
-                    <span className="text-xs text-gray-400">run: {entry.run_id?.slice(0, 8)}…</span>
-                    <span className="text-xs text-gray-400 ml-auto">
-                      {new Date(entry.timestamp).toLocaleString()}
-                    </span>
                   </div>
-                  <p className="text-sm text-gray-700">{entry.rationale}</p>
-                </div>
-                <span className="text-gray-400 text-sm shrink-0">{expandedId === entry.id ? '▲' : '▼'}</span>
-              </div>
 
-              {/* Expanded: inputs + outputs */}
-              {expandedId === entry.id && (
-                <div className="border-t grid grid-cols-2 divide-x text-xs">
-                  <div className="p-4">
-                    <p className="font-semibold text-gray-500 mb-2 uppercase tracking-wide text-xs">Inputs</p>
-                    <pre className="bg-gray-50 rounded p-3 overflow-auto max-h-48 text-xs leading-relaxed">
-                      {JSON.stringify(entry.inputs, null, 2)}
-                    </pre>
+                  {/* Content */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+                      <span className={`badge ${AGENT_COLORS[entry.agent_name] || 'badge-blue'}`}>
+                        {entry.agent_name}
+                      </span>
+                      {entry.po_number && (
+                        <span className="mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                          {entry.po_number}
+                        </span>
+                      )}
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                        run: {entry.run_id?.slice(0, 8)}…
+                      </span>
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 'auto' }}>
+                        {new Date(entry.timestamp).toLocaleString()}
+                      </span>
+                    </div>
+                    <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {entry.rationale}
+                    </p>
                   </div>
-                  <div className="p-4">
-                    <p className="font-semibold text-gray-500 mb-2 uppercase tracking-wide text-xs">Output</p>
-                    <pre className="bg-gray-50 rounded p-3 overflow-auto max-h-48 text-xs leading-relaxed">
-                      {JSON.stringify(entry.output, null, 2)}
-                    </pre>
-                  </div>
+
+                  <span style={{ color: 'var(--text-muted)', fontSize: 12, flexShrink: 0 }}>
+                    {isExpanded ? '▲' : '▼'}
+                  </span>
                 </div>
-              )}
-            </div>
-          ))}
+
+                {/* Expanded: inputs + outputs */}
+                {isExpanded && (
+                  <div style={{ borderTop: '1px solid var(--border)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
+                    <div style={{ padding: 16, borderRight: '1px solid var(--border)' }}>
+                      <p style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Inputs
+                      </p>
+                      <pre style={{
+                        fontSize: 11, background: 'var(--bg-surface)', color: 'var(--text-secondary)',
+                        border: '1px solid var(--border)', borderRadius: 6, padding: 12,
+                        overflow: 'auto', maxHeight: 200, lineHeight: 1.5,
+                        fontFamily: 'JetBrains Mono, monospace',
+                      }}>
+                        {JSON.stringify(entry.inputs, null, 2)}
+                      </pre>
+                    </div>
+                    <div style={{ padding: 16 }}>
+                      <p style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Output
+                      </p>
+                      <pre style={{
+                        fontSize: 11, background: 'var(--bg-surface)', color: 'var(--text-secondary)',
+                        border: '1px solid var(--border)', borderRadius: 6, padding: 12,
+                        overflow: 'auto', maxHeight: 200, lineHeight: 1.5,
+                        fontFamily: 'JetBrains Mono, monospace',
+                      }}>
+                        {JSON.stringify(entry.output, null, 2)}
+                      </pre>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

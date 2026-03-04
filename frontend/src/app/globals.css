@@ -1,6 +1,26 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
+/* ─── Tailwind v4 theme tokens (required for shadcn/ui components) ─── */
+@theme {
+  --color-background: #0B0F1A;
+  --color-foreground: #F1F5F9;
+  --color-primary: #3B82F6;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #1A2035;
+  --color-secondary-foreground: #F1F5F9;
+  --color-destructive: #EF4444;
+  --color-destructive-foreground: #ffffff;
+  --color-muted: #1E293B;
+  --color-muted-foreground: #64748B;
+  --color-accent: #1E293B;
+  --color-accent-foreground: #F1F5F9;
+  --color-border: #1E293B;
+  --color-input: #0F1629;
+  --color-ring: #3B82F6;
+  --radius: 0.5rem;
+}
+
 :root {
   --bg-primary: #0B0F1A;
   --bg-secondary: #111827;
@@ -96,6 +116,15 @@ body {
   100% {
     box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
   }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
 }
 
 .animate-fade-up {

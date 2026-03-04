@@ -11,46 +11,6 @@ import {
   type AgentActivityEntry,
 } from '@/lib/api';
 
-// ─── OLD IMPORTS (kept for reference) ────────────────────────
-// import { type AgentActivityEntry, runPipeline } from '@/lib/api';
-
-// ─── OLD TYPES (kept for reference) ──────────────────────────
-// type PipelineResult = {
-//   status: string;
-//   run_id?: string;
-//   po_number?: string;
-//   po_total_usd?: number;
-//   net_requirements_count?: number;
-//   supplier_selections_count?: number;
-//   container_plan?: {
-//     container_type: string;
-//     num_containers: number;
-//     binding_utilisation_pct: number;
-//     estimated_freight_usd: number;
-//   };
-//   demand_rationale?: string;
-//   supplier_rationale?: string;
-//   container_rationale?: string;
-//   po_rationale?: string;
-//   agent_activity?: Record<string, AgentActivityEntry>;
-//   error?: string;
-// };
-
-// ─── OLD CONSTANTS (kept for reference) ──────────────────────
-// const AGENT_TABS = [
-//   { key: 'DemandAnalyst', label: 'Demand Analyst', desc: '...' },
-//   { key: 'SupplierSelector', label: 'Supplier Selector', desc: '...' },
-//   { key: 'ContainerOptimizer', label: 'Container Optimizer', desc: '...' },
-//   { key: 'POCompiler', label: 'PO Compiler', desc: '...' },
-// ] as const;
-// const STEP_ORDER = AGENT_TABS.map(agent => agent.key);
-// function formatDetailValue(value: unknown) {
-//   if (value == null) return 'N/A';
-//   if (Array.isArray(value)) return value.length === 0 ? 'None' : JSON.stringify(value);
-//   if (typeof value === 'object') return JSON.stringify(value);
-//   return String(value);
-// }
-
 const SAMPLE_SKUS = ['FLT-001', 'FLT-002', 'ENG-001', 'ELC-001', 'GSK-001'];
 
 type Step =
@@ -65,6 +25,22 @@ type Step =
   | 'review_po'
   | 'done'
   | 'error';
+
+const STEPS = [
+  { key: 'demand', label: 'Demand Analyst' },
+  { key: 'supplier', label: 'Supplier Selector' },
+  { key: 'container', label: 'Container Optimizer' },
+  { key: 'po', label: 'PO Compiler' },
+];
+
+const stepIndexMap: Record<Step, number> = {
+  idle: -1,
+  running_demand: 0, review_demand: 0,
+  running_supplier: 1, review_supplier: 1,
+  running_container: 2, review_container: 2,
+  running_po: 3, review_po: 3,
+  done: 4, error: -1,
+};
 
 export default function PipelinePage() {
   const [selectedSkus, setSelectedSkus] = useState<string[]>([]);
@@ -182,127 +158,145 @@ export default function PipelinePage() {
     }
   };
 
-  const isRunning = ['running_demand', 'running_supplier', 'running_container', 'running_po'].includes(step);
-
-  const STEPS = [
-    { key: 'demand', label: 'Demand Analyst' },
-    { key: 'supplier', label: 'Supplier Selector' },
-    { key: 'container', label: 'Container Optimizer' },
-    { key: 'po', label: 'PO Compiler' },
-  ];
-
-  const stepIndex = ({
-    idle: -1,
-    running_demand: 0, review_demand: 0,
-    running_supplier: 1, review_supplier: 1,
-    running_container: 2, review_container: 2,
-    running_po: 3, review_po: 3,
-    done: 4, error: -1,
-  } as Record<Step, number>)[step] ?? -1;
-
   const resetPipeline = () => {
     setStep('idle');
     setRunId(null);
     setError(null);
     setNetRequirements([]);
+    setDemandRationale('');
     setSupplierSelections([]);
+    setSupplierRationale('');
     setSupplierPicks({});
     setContainerPlan(null);
+    setContainerRationale('');
     setPoNumber(null);
     setPoTotal(null);
+    setPoRationale('');
     setAgentActivity({});
     setApprovalStatus(null);
   };
 
-  return (
-    <div className="max-w-5xl">
-      <h1 className="text-3xl font-bold mb-2">Run Pipeline</h1>
-      <p className="text-gray-500 mb-8">
-        Each agent runs one at a time. Review the results and confirm before the next agent starts.
-      </p>
+  const isRunning = ['running_demand', 'running_supplier', 'running_container', 'running_po'].includes(step);
+  const stepIndex = stepIndexMap[step] ?? -1;
 
-      {/* ── Configuration ── */}
+  return (
+    <div style={{ maxWidth: 1000 }}>
+      {/* Header */}
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
+          Run Pipeline
+        </h1>
+        <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
+          Each agent runs one at a time. Review the results and confirm before the next agent starts.
+        </p>
+      </div>
+
+      {/* Config step */}
       {step === 'idle' && (
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="font-semibold text-lg mb-4">Pipeline Configuration</h2>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Planning Horizon</label>
-            <select
-              className="border rounded px-3 py-2 text-sm"
-              value={horizon}
-              onChange={e => setHorizon(Number(e.target.value))}
-            >
+        <div className="card" style={{ padding: 24, marginBottom: 20 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 20 }}>
+            Pipeline Configuration
+          </h2>
+
+          {/* Horizon */}
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 8 }}>
+              Planning Horizon
+            </label>
+            <select value={horizon} onChange={e => setHorizon(Number(e.target.value))} style={{ width: 160 }}>
               <option value={1}>1 month</option>
               <option value={2}>2 months</option>
               <option value={3}>3 months</option>
               <option value={6}>6 months</option>
             </select>
           </div>
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+
+          {/* SKU selection */}
+          <div style={{ marginBottom: 24 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 8 }}>
               SKU Selection
-              <span className="ml-2 text-gray-400 font-normal">(leave empty = auto-select below-reorder SKUs)</span>
+              <span style={{ color: 'var(--text-muted)', fontWeight: 400, marginLeft: 8 }}>
+                (leave empty to auto-select below-reorder SKUs)
+              </span>
             </label>
-            <div className="flex flex-wrap gap-2 mb-3">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
               {SAMPLE_SKUS.map(sku => (
                 <button
                   key={sku}
                   onClick={() => toggleSku(sku)}
-                  className={`px-3 py-1 rounded-full text-sm border transition ${
-                    selectedSkus.includes(sku)
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'
-                  }`}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 100,
+                    fontSize: 12,
+                    fontWeight: 500,
+                    border: `1px solid ${selectedSkus.includes(sku) ? 'var(--accent-blue)' : 'var(--border)'}`,
+                    background: selectedSkus.includes(sku) ? 'var(--accent-blue-glow)' : 'transparent',
+                    color: selectedSkus.includes(sku) ? 'var(--accent-blue)' : 'var(--text-muted)',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
+                  }}
                 >
                   {sku}
                 </button>
               ))}
             </div>
-            <div className="flex gap-2">
+            <div style={{ display: 'flex', gap: 8 }}>
               <input
-                className="border rounded px-3 py-1.5 text-sm flex-1 max-w-xs"
                 placeholder="Add custom SKU (e.g. ENG-003)"
                 value={customSku}
                 onChange={e => setCustomSku(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && addCustomSku()}
+                style={{ width: 260, fontSize: 13 }}
               />
-              <button onClick={addCustomSku} className="px-4 py-1.5 text-sm border rounded hover:bg-gray-50">
+              <button onClick={addCustomSku} className="btn-outline" style={{ padding: '8px 16px', fontSize: 13 }}>
                 Add
               </button>
             </div>
             {selectedSkus.length > 0 && (
-              <p className="text-xs text-gray-500 mt-2">Selected: {selectedSkus.join(', ')}</p>
+              <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>
+                Selected: {selectedSkus.join(', ')}
+              </p>
             )}
           </div>
-          <button
-            onClick={handleStart}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
-          >
+
+          <button onClick={handleStart} className="btn-primary">
             Start Pipeline
           </button>
         </div>
       )}
 
-      {/* ── Progress bar ── */}
+      {/* Progress stepper */}
       {step !== 'idle' && step !== 'error' && (
-        <div className="bg-white rounded-lg shadow p-4 mb-6">
-          <div className="flex items-center justify-between">
+        <div className="card" style={{ padding: '16px 24px', marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
             {STEPS.map((s, i) => (
-              <div key={s.key} className="flex items-center flex-1">
-                <div className="flex flex-col items-center">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition ${
-                    i < stepIndex ? 'bg-green-500 border-green-500 text-white' :
-                    i === stepIndex ? 'bg-blue-600 border-blue-600 text-white' :
-                    'bg-white border-gray-300 text-gray-400'
-                  }`}>
+              <div key={s.key} style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <div style={{
+                    width: 32, height: 32, borderRadius: '50%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 13, fontWeight: 700,
+                    background: i < stepIndex ? 'var(--accent-green)' : i === stepIndex ? 'var(--accent-blue)' : 'var(--bg-surface)',
+                    border: `2px solid ${i < stepIndex ? 'var(--accent-green)' : i === stepIndex ? 'var(--accent-blue)' : 'var(--border)'}`,
+                    color: i <= stepIndex ? 'white' : 'var(--text-muted)',
+                    transition: 'all 0.3s',
+                  }}>
                     {i < stepIndex ? '✓' : i + 1}
                   </div>
-                  <span className={`text-xs mt-1 text-center w-20 ${i === stepIndex ? 'text-blue-600 font-medium' : 'text-gray-400'}`}>
+                  <span style={{
+                    fontSize: 11, marginTop: 6, textAlign: 'center', width: 80,
+                    color: i === stepIndex ? 'var(--accent-blue)' : i < stepIndex ? 'var(--accent-green)' : 'var(--text-muted)',
+                    fontWeight: i === stepIndex ? 600 : 400,
+                  }}>
                     {s.label}
                   </span>
                 </div>
                 {i < STEPS.length - 1 && (
-                  <div className={`flex-1 h-0.5 mb-5 mx-1 ${i < stepIndex ? 'bg-green-400' : 'bg-gray-200'}`} />
+                  <div style={{
+                    flex: 1, height: 2, marginBottom: 20, marginLeft: 4, marginRight: 4,
+                    background: i < stepIndex ? 'var(--accent-green)' : 'var(--border)',
+                    transition: 'background 0.3s',
+                  }} />
                 )}
               </div>
             ))}
@@ -310,50 +304,58 @@ export default function PipelinePage() {
         </div>
       )}
 
-      {/* ── Loading spinner ── */}
+      {/* Running spinner */}
       {isRunning && (
-        <div className="bg-white rounded-lg shadow p-8 mb-6 flex items-center gap-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        <div className="card" style={{ padding: 28, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div className="animate-spin" style={{
+            width: 28, height: 28, borderRadius: '50%',
+            border: '3px solid var(--border)',
+            borderTopColor: 'var(--accent-blue)',
+          }} />
           <div>
-            <p className="font-medium text-gray-800">Agent running...</p>
-            <p className="text-sm text-gray-500">This may take 10–30 seconds</p>
+            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>Agent running…</p>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>This may take 10–30 seconds</p>
           </div>
         </div>
       )}
 
-      {/* ── Step 1: Demand Analyst Results ── */}
+      {/* Step 1 — Demand Analyst Results */}
       {step === 'review_demand' && (
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="flex items-start justify-between mb-4">
+        <div className="card" style={{ padding: 24, marginBottom: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
             <div>
-              <h2 className="font-semibold text-lg">Demand Analyst Results</h2>
-              <p className="text-sm text-gray-500 mt-1">{demandRationale}</p>
+              <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>Demand Analyst Results</h2>
+              {demandRationale && (
+                <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4, maxWidth: 600, lineHeight: 1.5 }}>
+                  {demandRationale}
+                </p>
+              )}
             </div>
-            <span className="text-xs px-3 py-1 rounded-full bg-green-100 text-green-700 font-medium">
+            <span className="badge badge-blue">
               {netRequirements.length} SKUs need replenishment
             </span>
           </div>
-          <div className="overflow-x-auto rounded-lg border mb-6">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50">
+
+          <div style={{ overflowX: 'auto', borderRadius: 8, border: '1px solid var(--border)', marginBottom: 20 }}>
+            <table>
+              <thead>
                 <tr>
-                  {['SKU', 'Net Qty', 'Current Stock', 'Safety Stock', 'Forecast Demand', 'Urgency'].map(h => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{h}</th>
+                  {['SKU', 'Net Qty', 'Current Stock', 'In Transit', 'Safety Stock', 'Forecast Demand', 'Urgency'].map(h => (
+                    <th key={h}>{h}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody>
                 {netRequirements.map(req => (
-                  <tr key={req.sku} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-mono font-medium">{req.sku}</td>
-                    <td className="px-4 py-3 font-bold text-blue-700">{req.net_qty.toLocaleString()}</td>
-                    <td className="px-4 py-3">{req.current_stock.toLocaleString()}</td>
-                    <td className="px-4 py-3">{req.safety_stock.toLocaleString()}</td>
-                    <td className="px-4 py-3">{req.forecast_demand.toLocaleString()}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                        req.urgency === 'critical' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'
-                      }`}>
+                  <tr key={req.sku}>
+                    <td className="mono" style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{req.sku}</td>
+                    <td className="mono" style={{ fontWeight: 700, color: 'var(--accent-blue)' }}>{req.net_qty.toLocaleString()}</td>
+                    <td>{req.current_stock.toLocaleString()}</td>
+                    <td>{req.in_transit.toLocaleString()}</td>
+                    <td>{req.safety_stock.toLocaleString()}</td>
+                    <td>{req.forecast_demand.toLocaleString()}</td>
+                    <td>
+                      <span className={`badge ${req.urgency === 'critical' ? 'badge-red' : 'badge-amber'}`}>
                         {req.urgency}
                       </span>
                     </td>
@@ -362,75 +364,82 @@ export default function PipelinePage() {
               </tbody>
             </table>
           </div>
-          <button onClick={handleRunSupplier} className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">
+
+          <button onClick={handleRunSupplier} className="btn-primary">
             Continue to Supplier Selection →
           </button>
         </div>
       )}
 
-      {/* ── Step 2: Supplier Selector Results ── */}
+      {/* Step 2 — Supplier Selector Results */}
       {step === 'review_supplier' && (
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="flex items-start justify-between mb-4">
+        <div className="card" style={{ padding: 24, marginBottom: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
             <div>
-              <h2 className="font-semibold text-lg">Supplier Selector Results</h2>
-              <p className="text-sm text-gray-500 mt-1">{supplierRationale}</p>
+              <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>Supplier Selector Results</h2>
+              {supplierRationale && (
+                <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4, maxWidth: 600, lineHeight: 1.5 }}>
+                  {supplierRationale}
+                </p>
+              )}
             </div>
-            <span className="text-xs px-3 py-1 rounded-full bg-green-100 text-green-700 font-medium">
-              Review &amp; pick suppliers
-            </span>
+            <span className="badge badge-green">Review &amp; pick suppliers</span>
           </div>
-          <p className="text-sm text-gray-500 mb-4">
-            The AI has recommended a supplier for each SKU. You can change any selection using the dropdown.
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
+            AI has recommended a supplier for each SKU. Use the dropdown to override any selection.
           </p>
-          <div className="overflow-x-auto rounded-lg border mb-6">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50">
+
+          <div style={{ overflowX: 'auto', borderRadius: 8, border: '1px solid var(--border)', marginBottom: 20 }}>
+            <table>
+              <thead>
                 <tr>
                   {['SKU', 'Qty', 'Urgency', 'Select Supplier', 'Unit Price', 'Lead Time', 'Score'].map(h => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{h}</th>
+                    <th key={h}>{h}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody>
                 {supplierSelections.filter(s => s.supplier_id).map(sel => {
                   const picked = supplierPicks[sel.sku] || sel;
                   const candidates = sel.all_candidates || [];
                   return (
-                    <tr key={sel.sku} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 font-mono font-medium">{sel.sku}</td>
-                      <td className="px-4 py-3">{sel.net_qty.toLocaleString()}</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                          sel.urgency === 'critical' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'
-                        }`}>
+                    <tr key={sel.sku}>
+                      <td className="mono" style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{sel.sku}</td>
+                      <td className="mono">{sel.net_qty.toLocaleString()}</td>
+                      <td>
+                        <span className={`badge ${sel.urgency === 'critical' ? 'badge-red' : 'badge-amber'}`}>
                           {sel.urgency}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td>
                         {candidates.length > 1 ? (
                           <select
-                            className="border rounded px-2 py-1 text-sm"
                             value={picked.supplier_id || ''}
                             onChange={e => {
                               const chosen = candidates.find(c => c.supplier_id === e.target.value);
                               if (chosen) setSupplierPicks(prev => ({ ...prev, [sel.sku]: { ...sel, ...chosen } }));
                             }}
+                            style={{ fontSize: 12, padding: '4px 8px' }}
                           >
                             {candidates.map(c => (
                               <option key={c.supplier_id} value={c.supplier_id}>
-                                {c.supplier_name} (score: {c.score})
+                                {c.supplier_name} ({c.score})
                               </option>
                             ))}
                           </select>
                         ) : (
-                          <span className="font-medium">{picked.supplier_name}</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                            {picked.supplier_name}
+                          </span>
                         )}
                       </td>
-                      <td className="px-4 py-3">${picked.unit_price?.toFixed(2)}</td>
-                      <td className="px-4 py-3">{picked.lead_time_days}d</td>
-                      <td className="px-4 py-3">
-                        <span className={`font-medium ${(picked.score || 0) >= 80 ? 'text-green-600' : 'text-amber-600'}`}>
+                      <td className="mono">${picked.unit_price?.toFixed(2)}</td>
+                      <td>{picked.lead_time_days}d</td>
+                      <td>
+                        <span className="mono" style={{
+                          fontWeight: 700,
+                          color: (picked.score || 0) >= 80 ? 'var(--accent-green)' : 'var(--accent-amber)',
+                        }}>
                           {picked.score}/100
                         </span>
                       </td>
@@ -440,91 +449,157 @@ export default function PipelinePage() {
               </tbody>
             </table>
           </div>
-          <button onClick={handleRunContainer} className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">
+
+          <button onClick={handleRunContainer} className="btn-primary">
             Continue to Container Optimization →
           </button>
         </div>
       )}
 
-      {/* ── Step 3: Container Optimizer Results ── */}
+      {/* Step 3 — Container Optimizer Results */}
       {step === 'review_container' && containerPlan && (
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="mb-4">
-            <h2 className="font-semibold text-lg">Container Optimizer Results</h2>
-            <p className="text-sm text-gray-500 mt-1">{containerRationale}</p>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="card" style={{ padding: 24, marginBottom: 20 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>
+            Container Optimizer Results
+          </h2>
+          {containerRationale && (
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 20, lineHeight: 1.5 }}>
+              {containerRationale}
+            </p>
+          )}
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
             {[
-              { label: 'Container Type', value: containerPlan.container_type },
-              { label: 'Number of Containers', value: containerPlan.num_containers },
-              { label: 'Utilisation', value: `${containerPlan.binding_utilisation_pct?.toFixed(1)}%` },
-              { label: 'Est. Freight', value: `$${containerPlan.estimated_freight_usd?.toLocaleString()}` },
+              { label: 'Container Type', value: containerPlan.container_type, accent: 'var(--accent-blue)' },
+              { label: 'Containers', value: containerPlan.num_containers, accent: 'var(--accent-cyan)' },
+              { label: 'Utilisation', value: `${containerPlan.binding_utilisation_pct?.toFixed(1)}%`, accent: 'var(--accent-green)' },
+              { label: 'Est. Freight', value: `$${containerPlan.estimated_freight_usd?.toLocaleString()}`, accent: 'var(--accent-amber)' },
             ].map(card => (
-              <div key={card.label} className="bg-gray-50 rounded-lg p-4 border">
-                <p className="text-xs text-gray-500">{card.label}</p>
-                <p className="font-bold text-lg mt-1">{card.value}</p>
+              <div key={card.label} style={{
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border)',
+                borderRadius: 10,
+                padding: '14px 16px',
+              }}>
+                <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>{card.label}</p>
+                <p className="mono" style={{ fontSize: 22, fontWeight: 700, color: card.accent, marginTop: 4 }}>
+                  {card.value}
+                </p>
               </div>
             ))}
           </div>
-          <button onClick={handleRunPO} className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">
+
+          <button onClick={handleRunPO} className="btn-primary">
             Continue to PO Compilation →
           </button>
         </div>
       )}
 
-      {/* ── Step 4: PO Compiler Results ── */}
+      {/* Step 4 — PO Compiler Results */}
       {(step === 'review_po' || step === 'done') && poNumber && (
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="mb-4">
-            <h2 className="font-semibold text-lg">Draft PO Ready</h2>
-            <p className="text-sm text-gray-500 mt-1">{poRationale}</p>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+        <div className="card" style={{ padding: 24, marginBottom: 20 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>
+            Draft PO Ready
+          </h2>
+          {poRationale && (
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 20, lineHeight: 1.5 }}>
+              {poRationale}
+            </p>
+          )}
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 24 }}>
             {[
-              { label: 'PO Number', value: poNumber },
-              { label: 'Total Value', value: `$${poTotal?.toLocaleString()}` },
-              { label: 'Status', value: approvalStatus || 'pending' },
+              { label: 'PO Number', value: poNumber, accent: 'var(--text-primary)', mono: true },
+              { label: 'Total Value', value: `$${poTotal?.toLocaleString()}`, accent: 'var(--accent-green)', mono: true },
+              {
+                label: 'Status',
+                value: approvalStatus || 'pending',
+                accent: approvalStatus === 'approved' ? 'var(--accent-green)' : approvalStatus === 'rejected' ? 'var(--accent-red)' : 'var(--accent-amber)',
+                mono: false,
+              },
             ].map(card => (
-              <div key={card.label} className="bg-gray-50 rounded-lg p-4 border">
-                <p className="text-xs text-gray-500">{card.label}</p>
-                <p className="font-bold text-lg mt-1 capitalize">{card.value}</p>
+              <div key={card.label} style={{
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border)',
+                borderRadius: 10,
+                padding: '14px 16px',
+              }}>
+                <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>{card.label}</p>
+                <p className={card.mono ? 'mono' : ''} style={{
+                  fontSize: card.mono ? 18 : 16,
+                  fontWeight: 700,
+                  color: card.accent,
+                  marginTop: 4,
+                  textTransform: 'capitalize',
+                }}>
+                  {card.value}
+                </p>
               </div>
             ))}
           </div>
+
           {step === 'review_po' && (
-            <div className="flex gap-3">
-              <button onClick={() => handleApproval('approve')} className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition">
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button onClick={() => handleApproval('approve')} className="btn-success">
                 ✓ Approve PO
               </button>
-              <button onClick={() => handleApproval('reject')} className="bg-red-100 text-red-700 px-6 py-3 rounded-lg hover:bg-red-200 transition">
+              <button onClick={() => handleApproval('reject')} className="btn-danger">
                 ✗ Reject PO
               </button>
             </div>
           )}
           {step === 'done' && (
-            <div className={`rounded-lg px-4 py-3 text-sm font-medium ${
-              approvalStatus === 'approved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-            }`}>
-              PO {poNumber} has been {approvalStatus}.
+            <div style={{
+              borderRadius: 8,
+              padding: '12px 16px',
+              fontSize: 13,
+              fontWeight: 600,
+              background: approvalStatus === 'approved' ? 'var(--accent-green-glow)' : 'var(--accent-red-glow)',
+              color: approvalStatus === 'approved' ? 'var(--accent-green)' : 'var(--accent-red)',
+              border: `1px solid ${approvalStatus === 'approved' ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}`,
+            }}>
+              PO {poNumber} has been {approvalStatus}.{' '}
+              {approvalStatus === 'approved' && 'View it in the Approval Queue.'}
             </div>
           )}
         </div>
       )}
 
-      {/* ── Error state ── */}
+      {/* Error state */}
       {step === 'error' && error && (
-        <div className="bg-red-50 rounded-lg shadow p-6 mb-6">
-          <h2 className="font-semibold text-lg text-red-700 mb-2">Pipeline Error</h2>
-          <p className="text-sm font-mono bg-red-100 text-red-800 p-3 rounded mb-4">{error}</p>
-          <button onClick={resetPipeline} className="bg-white border px-5 py-2 rounded hover:bg-gray-50 text-sm">
-            Start Over
+        <div className="card" style={{ padding: 24, marginBottom: 20, border: '1px solid rgba(239,68,68,0.2)' }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--accent-red)', marginBottom: 12 }}>
+            Pipeline Error
+          </h2>
+          <pre style={{
+            fontSize: 12,
+            background: 'var(--accent-red-glow)',
+            color: 'var(--accent-red)',
+            border: '1px solid rgba(239,68,68,0.15)',
+            borderRadius: 8,
+            padding: 14,
+            marginBottom: 16,
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+            fontFamily: 'JetBrains Mono, monospace',
+          }}>
+            {error}
+          </pre>
+          <button onClick={resetPipeline} className="btn-outline">
+            ← Start Over
           </button>
         </div>
       )}
 
-      {/* ── Start Over ── */}
+      {/* Start over link */}
       {step !== 'idle' && step !== 'error' && (
-        <button onClick={resetPipeline} className="text-sm text-gray-400 hover:text-gray-600 underline">
+        <button
+          onClick={resetPipeline}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            fontSize: 13, color: 'var(--text-muted)', textDecoration: 'underline',
+          }}
+        >
           ← Start over with new configuration
         </button>
       )}

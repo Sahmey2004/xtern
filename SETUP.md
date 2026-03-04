@@ -71,10 +71,14 @@ Open: http://localhost:3000
 
 1. Go to http://localhost:3000/pipeline
 2. Select some SKUs (or leave empty for auto-selection)
-3. Click "Run Pipeline"
-4. Watch agents execute (takes ~30-60s)
-5. Go to /approvals to review and approve the draft PO
-6. Go to /logs to see the full audit trail
+3. Set horizon months (default 3)
+4. Click "Start Pipeline" — Demand Analyst runs; review net requirements
+5. Click "Continue → Supplier Selector" — review supplier picks (can override per-SKU)
+6. Click "Continue → Container Optimizer" — review container plan and line items
+7. Click "Continue → PO Compiler" — PO draft is saved to Supabase
+8. Click "Approve" on the pipeline page, or go to /approvals to manage all pending POs
+9. Go to /logs to see the full agent decision audit trail
+10. Go to /suppliers to browse the supplier master and product catalog
 
 ## Verifying things work
 

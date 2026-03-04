@@ -2,6 +2,42 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { fetchHealth } from '@/lib/api';
+import { CardStack, type CardStackItem } from '@/components/ui/card-stack';
+
+const AGENT_CARDS: CardStackItem[] = [
+  {
+    id: 1,
+    title: 'Demand Analyst',
+    description: 'Forecasts net requirements across a 3-month horizon using historical sales, current inventory, and safety stock levels.',
+    imageSrc: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80',
+    href: '/pipeline',
+    tag: 'Step 1',
+  },
+  {
+    id: 2,
+    title: 'Supplier Selector',
+    description: 'Scores and ranks suppliers using weighted criteria (quality, delivery, lead time, cost) to select optimal vendors per SKU.',
+    imageSrc: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&q=80',
+    href: '/suppliers',
+    tag: 'Step 2',
+  },
+  {
+    id: 3,
+    title: 'Container Optimizer',
+    description: 'Applies greedy bin-packing to minimize container count and freight cost while respecting weight and volume constraints.',
+    imageSrc: 'https://images.unsplash.com/photo-1494412651409-8963ce7935a7?w=800&q=80',
+    href: '/pipeline',
+    tag: 'Step 3',
+  },
+  {
+    id: 4,
+    title: 'PO Compiler',
+    description: 'Assembles the final draft Purchase Order, saves it to Supabase, and generates an executive summary for human review.',
+    imageSrc: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&q=80',
+    href: '/approvals',
+    tag: 'Step 4',
+  },
+];
 
 type RecentPO = {
   po_number: string;
@@ -222,6 +258,30 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Agent Capabilities — CardStack */}
+      <div style={{ marginTop: 32 }} className="animate-fade-up stagger-5">
+        <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 2 }}>Agent Capabilities</h2>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+              4-step pipeline · drag or click cards to explore
+            </p>
+          </div>
+          <a href="/agents" style={{ fontSize: 12, color: 'var(--accent-blue)', textDecoration: 'none' }}>
+            View agents →
+          </a>
+        </div>
+        <CardStack
+          items={AGENT_CARDS}
+          cardWidth={460}
+          cardHeight={260}
+          autoAdvance
+          intervalMs={3000}
+          pauseOnHover
+          showDots
+        />
       </div>
     </div>
   );

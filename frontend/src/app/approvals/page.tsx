@@ -13,11 +13,12 @@ type LineItem = {
   rationale: string;
 };
 
-type ContainerPlan = {
+type ContainerPlanDetail = {
   num_containers?: number;
   container_type?: string;
   volume_utilisation_pct?: number;
   weight_utilisation_pct?: number;
+  binding_utilisation_pct?: number;
   estimated_freight_usd?: number;
 };
 
@@ -28,24 +29,40 @@ type PurchaseOrder = {
   created_by: string;
   total_usd: number;
   notes: string;
-  container_plan?: ContainerPlan | null;
+  container_plan?: ContainerPlanDetail | null;
   po_line_items: LineItem[];
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  draft: 'badge-amber',
+  pending_approval: 'badge-blue',
+  approved: 'badge-green',
+  rejected: 'badge-red',
 };
 
 export default function ApprovalsPage() {
   const [pos, setPos] = useState<PurchaseOrder[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPo, setSelectedPo] = useState<PurchaseOrder | null>(null);
+  const [selectedPo, setSelectedPo] = useState<string | null>(null);
   const [reviewer, setReviewer] = useState('Manager');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [toast, setToast] = useState('');
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
 
   const fetchPos = async () => {
+    setLoading(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/pipeline/pos?status=draft`);
-      const data = await res.json();
-      setPos(data.purchase_orders || []);
+      // Fetch both draft and pending_approval POs
+      const [r1, r2] = await Promise.all([
+        fetch(`${BACKEND_URL}/pipeline/pos?status=draft&limit=50`).then(r => r.json()),
+        fetch(`${BACKEND_URL}/pipeline/pos?status=pending_approval&limit=50`).then(r => r.json()),
+      ]);
+      const combined: PurchaseOrder[] = [
+        ...(r1.purchase_orders || []),
+        ...(r2.purchase_orders || []),
+      ];
+      combined.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      setPos(combined);
     } catch {
       setPos([]);
     } finally {
@@ -55,175 +72,248 @@ export default function ApprovalsPage() {
 
   useEffect(() => { fetchPos(); }, []);
 
-  const handleAction = async (action: 'approve' | 'reject') => {
-    if (!selectedPo) return;
+  const showToast = (msg: string, ok: boolean) => {
+    setToast({ msg, ok });
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  const handleAction = async (po: PurchaseOrder, action: 'approve' | 'reject') => {
     setSubmitting(true);
     try {
-      await approvePO(selectedPo.po_number, reviewer, notes, action);
-      setToast(`PO ${selectedPo.po_number} ${action}d successfully.`);
+      await approvePO(po.po_number, reviewer, notes, action);
+      showToast(`PO ${po.po_number} ${action}d successfully.`, true);
       setSelectedPo(null);
       setNotes('');
-      setTimeout(() => setToast(''), 3000);
       fetchPos();
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : 'Approval request failed.';
-      setToast(`Error: ${message}`);
+      showToast(`Error: ${e instanceof Error ? e.message : 'Request failed'}`, false);
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="max-w-5xl">
-      <h1 className="text-3xl font-bold mb-2">Approval Queue</h1>
-      <p className="text-gray-500 mb-6">Review and approve or reject draft Purchase Orders.</p>
+    <div style={{ maxWidth: 1000 }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
+        <div>
+          <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
+            Approval Queue
+          </h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
+            Review and approve or reject draft Purchase Orders.
+          </p>
+        </div>
+        <button onClick={fetchPos} className="btn-outline" style={{ marginTop: 4 }}>
+          Refresh
+        </button>
+      </div>
 
+      {/* Toast */}
       {toast && (
-        <div className="mb-4 bg-green-100 text-green-800 px-4 py-2 rounded text-sm">{toast}</div>
+        <div style={{
+          marginBottom: 16,
+          padding: '12px 16px',
+          borderRadius: 8,
+          fontSize: 13,
+          fontWeight: 500,
+          background: toast.ok ? 'var(--accent-green-glow)' : 'var(--accent-red-glow)',
+          color: toast.ok ? 'var(--accent-green)' : 'var(--accent-red)',
+          border: `1px solid ${toast.ok ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}`,
+        }}>
+          {toast.msg}
+        </div>
       )}
 
       {loading ? (
-        <p className="text-gray-400">Loading…</p>
+        <div className="card" style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
+          <div style={{ fontSize: 13 }}>Loading purchase orders…</div>
+        </div>
       ) : pos.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-8 text-center text-gray-400">
-          No pending approvals. <a href="/pipeline" className="text-blue-600 underline">Run a pipeline</a> first.
+        <div className="card" style={{ padding: 40, textAlign: 'center' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 8 }}>
+            No pending purchase orders.
+          </p>
+          <a href="/pipeline" style={{ color: 'var(--accent-blue)', fontSize: 13, textDecoration: 'none' }}>
+            Run a pipeline to generate a PO →
+          </a>
         </div>
       ) : (
-        <div className="space-y-4">
-          {pos.map(po => (
-            <div key={po.po_number} className="bg-white rounded-lg shadow">
-              {/* PO header row */}
-              <div
-                className="flex items-center justify-between p-5 cursor-pointer hover:bg-gray-50"
-                onClick={() => setSelectedPo(selectedPo?.po_number === po.po_number ? null : po)}
-              >
-                <div className="flex items-center gap-4">
-                  <div>
-                    <p className="font-bold text-lg">{po.po_number}</p>
-                    <p className="text-sm text-gray-500">
-                      {new Date(po.created_at).toLocaleString()} · By {po.created_by}
-                    </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {pos.map(po => {
+            const isExpanded = selectedPo === po.po_number;
+            return (
+              <div key={po.po_number} className="card" style={{ overflow: 'hidden' }}>
+                {/* PO header row */}
+                <div
+                  onClick={() => setSelectedPo(isExpanded ? null : po.po_number)}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '16px 20px', cursor: 'pointer',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <div>
+                      <p className="mono" style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>
+                        {po.po_number}
+                      </p>
+                      <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+                        {new Date(po.created_at).toLocaleString()} · by {po.created_by}
+                      </p>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+                    <div style={{ textAlign: 'right' }}>
+                      <p style={{ fontSize: 10, color: 'var(--text-muted)' }}>Total Value</p>
+                      <p className="mono" style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
+                        ${po.total_usd?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <p style={{ fontSize: 10, color: 'var(--text-muted)' }}>Line Items</p>
+                      <p className="mono" style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
+                        {po.po_line_items?.length ?? 0}
+                      </p>
+                    </div>
+                    <span className={`badge ${STATUS_COLORS[po.status] || 'badge-blue'}`}>
+                      {po.status.replace('_', ' ')}
+                    </span>
+                    <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+                      {isExpanded ? '▲' : '▼'}
+                    </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-6">
-                  <div className="text-right">
-                    <p className="text-xs text-gray-500">Total Value</p>
-                    <p className="font-bold text-xl">${po.total_usd?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-gray-500">Line Items</p>
-                    <p className="font-bold text-xl">{po.po_line_items?.length ?? 0}</p>
-                  </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    po.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
-                    po.status === 'approved' ? 'bg-green-100 text-green-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>{po.status}</span>
-                  <span className="text-gray-400">{selectedPo?.po_number === po.po_number ? '▲' : '▼'}</span>
-                </div>
-              </div>
 
-              {/* Expanded detail */}
-              {selectedPo?.po_number === po.po_number && (
-                <div className="border-t px-5 pb-5">
-                  {/* AI notes */}
-                  {po.notes && (
-                    <div className="mt-4 bg-blue-50 rounded p-3 text-sm text-blue-800">
-                      <span className="font-semibold">AI Summary: </span>{po.notes}
-                    </div>
-                  )}
+                {/* Expanded detail */}
+                {isExpanded && (
+                  <div style={{ borderTop: '1px solid var(--border)', padding: '20px 20px 24px' }}>
+                    {/* AI notes */}
+                    {po.notes && (
+                      <div style={{
+                        marginBottom: 20,
+                        padding: '12px 16px',
+                        background: 'var(--accent-blue-glow)',
+                        border: '1px solid rgba(59,130,246,0.15)',
+                        borderRadius: 8,
+                        fontSize: 13,
+                        color: 'var(--text-secondary)',
+                        lineHeight: 1.5,
+                      }}>
+                        <span style={{ fontWeight: 600, color: 'var(--accent-blue)' }}>AI Summary: </span>
+                        {po.notes}
+                      </div>
+                    )}
 
-                  {/* Container plan */}
-                  {po.container_plan && (
-                    <div className="mt-4 grid grid-cols-4 gap-3">
-                      {[
-                        { label: 'Container', value: `${po.container_plan.num_containers}x ${po.container_plan.container_type}` },
-                        { label: 'Volume Util.', value: `${po.container_plan.volume_utilisation_pct?.toFixed(1)}%` },
-                        { label: 'Weight Util.', value: `${po.container_plan.weight_utilisation_pct?.toFixed(1)}%` },
-                        { label: 'Freight Est.', value: `$${po.container_plan.estimated_freight_usd?.toLocaleString()}` },
-                      ].map(card => (
-                        <div key={card.label} className="bg-gray-50 rounded p-3 text-sm">
-                          <p className="text-gray-500 text-xs">{card.label}</p>
-                          <p className="font-semibold mt-1">{card.value}</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Line items table */}
-                  <div className="mt-4 overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-left text-xs text-gray-500 border-b">
-                          <th className="pb-2 pr-4">SKU</th>
-                          <th className="pb-2 pr-4">Supplier</th>
-                          <th className="pb-2 pr-4 text-right">Qty</th>
-                          <th className="pb-2 pr-4 text-right">Unit Price</th>
-                          <th className="pb-2 text-right">Line Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(po.po_line_items || []).map((item, i) => (
-                          <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-2 pr-4 font-mono font-medium">{item.sku}</td>
-                            <td className="py-2 pr-4 text-gray-600">{item.supplier_id}</td>
-                            <td className="py-2 pr-4 text-right">{item.qty_ordered?.toLocaleString()}</td>
-                            <td className="py-2 pr-4 text-right">${item.unit_price?.toFixed(2)}</td>
-                            <td className="py-2 text-right font-medium">${item.total_price?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                          </tr>
+                    {/* Container plan */}
+                    {po.container_plan && (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 20 }}>
+                        {[
+                          { label: 'Container', value: `${po.container_plan.num_containers}x ${po.container_plan.container_type}` },
+                          { label: 'Volume Util.', value: `${po.container_plan.volume_utilisation_pct?.toFixed(1)}%` },
+                          { label: 'Weight Util.', value: `${po.container_plan.weight_utilisation_pct?.toFixed(1)}%` },
+                          { label: 'Freight Est.', value: `$${po.container_plan.estimated_freight_usd?.toLocaleString()}` },
+                        ].map(card => (
+                          <div key={card.label} style={{
+                            background: 'var(--bg-surface)',
+                            border: '1px solid var(--border)',
+                            borderRadius: 8,
+                            padding: '10px 14px',
+                          }}>
+                            <p style={{ fontSize: 10, color: 'var(--text-muted)' }}>{card.label}</p>
+                            <p className="mono" style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginTop: 3 }}>
+                              {card.value}
+                            </p>
+                          </div>
                         ))}
-                      </tbody>
-                      <tfoot>
-                        <tr className="font-bold">
-                          <td colSpan={4} className="pt-3 text-right text-sm text-gray-600">Total:</td>
-                          <td className="pt-3 text-right text-base">${po.total_usd?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
+                      </div>
+                    )}
 
-                  {/* Approval form */}
-                  <div className="mt-6 border-t pt-4">
-                    <div className="flex gap-4 items-end">
-                      <div className="flex-1">
-                        <label className="block text-xs font-medium text-gray-600 mb-1">Reviewer Name</label>
-                        <input
-                          className="border rounded px-3 py-2 text-sm w-full max-w-xs"
-                          value={reviewer}
-                          onChange={e => setReviewer(e.target.value)}
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <label className="block text-xs font-medium text-gray-600 mb-1">Notes (optional)</label>
-                        <input
-                          className="border rounded px-3 py-2 text-sm w-full"
-                          placeholder="Approval notes or rejection reason…"
-                          value={notes}
-                          onChange={e => setNotes(e.target.value)}
-                        />
-                      </div>
+                    {/* Line items table */}
+                    <div style={{ overflowX: 'auto', borderRadius: 8, border: '1px solid var(--border)', marginBottom: 20 }}>
+                      <table>
+                        <thead>
+                          <tr>
+                            {['SKU', 'Supplier', 'Qty', 'Unit Price', 'Line Total'].map(h => (
+                              <th key={h}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(po.po_line_items || []).map((item, i) => (
+                            <tr key={i}>
+                              <td className="mono" style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{item.sku}</td>
+                              <td style={{ color: 'var(--text-secondary)' }}>{item.supplier_id}</td>
+                              <td className="mono" style={{ textAlign: 'right' }}>{item.qty_ordered?.toLocaleString()}</td>
+                              <td className="mono" style={{ textAlign: 'right' }}>${item.unit_price?.toFixed(2)}</td>
+                              <td className="mono" style={{ textAlign: 'right', fontWeight: 600, color: 'var(--text-primary)' }}>
+                                ${item.total_price?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          <tr>
+                            <td colSpan={4} style={{ textAlign: 'right', color: 'var(--text-muted)', fontSize: 12, paddingTop: 12 }}>
+                              Total:
+                            </td>
+                            <td className="mono" style={{ textAlign: 'right', fontWeight: 700, color: 'var(--text-primary)', fontSize: 15, paddingTop: 12 }}>
+                              ${po.total_usd?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            </td>
+                          </tr>
+                        </tfoot>
+                      </table>
                     </div>
-                    <div className="flex gap-3 mt-4">
-                      <button
-                        onClick={() => handleAction('approve')}
-                        disabled={submitting}
-                        className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 text-sm disabled:opacity-50"
-                      >
-                        Approve PO
-                      </button>
-                      <button
-                        onClick={() => handleAction('reject')}
-                        disabled={submitting}
-                        className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 text-sm disabled:opacity-50"
-                      >
-                        Reject PO
-                      </button>
+
+                    {/* Approval form */}
+                    <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20 }}>
+                      <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 14 }}>
+                        Manager Approval
+                      </p>
+                      <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: 11, color: 'var(--text-muted)', marginBottom: 5 }}>
+                            Reviewer Name
+                          </label>
+                          <input
+                            value={reviewer}
+                            onChange={e => setReviewer(e.target.value)}
+                            style={{ width: 200 }}
+                          />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ display: 'block', fontSize: 11, color: 'var(--text-muted)', marginBottom: 5 }}>
+                            Notes (optional)
+                          </label>
+                          <input
+                            placeholder="Approval notes or rejection reason…"
+                            value={notes}
+                            onChange={e => setNotes(e.target.value)}
+                            style={{ width: '100%' }}
+                          />
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 10 }}>
+                        <button
+                          onClick={() => handleAction(po, 'approve')}
+                          disabled={submitting}
+                          className="btn-success"
+                        >
+                          ✓ Approve PO
+                        </button>
+                        <button
+                          onClick={() => handleAction(po, 'reject')}
+                          disabled={submitting}
+                          className="btn-danger"
+                        >
+                          ✗ Reject PO
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-          ))}
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
