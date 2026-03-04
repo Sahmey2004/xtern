@@ -2,23 +2,38 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import type { UserRole } from '@/lib/auth';
 
-const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Dashboard', icon: '◆' },
+type NavItem = {
+  href: string;
+  label: string;
+  icon: string;
+  roles?: UserRole[];
+};
+
+const NAV_ITEMS: NavItem[] = [
+  { href: '/', label: 'Dashboard', icon: '◆' },
   { href: '/pipeline', label: 'Run Pipeline', icon: '▷' },
-  { href: '/approvals', label: 'Approval Queue', icon: '◎' },
-  { href: '/logs', label: 'Decision Log', icon: '≡' },
+  { href: '/approvals', label: 'Approval Queue', icon: '◎', roles: ['administrator'] },
+  { href: '/logs', label: 'Decision Log', icon: '≡', roles: ['administrator'] },
+  { href: '/data', label: 'Data', icon: '⊞' },
   { href: '/suppliers', label: 'Suppliers', icon: '◈' },
   { href: '/agents', label: 'Agents', icon: '⬡' },
 ];
 
 export default function NavLinks() {
   const pathname = usePathname();
+  const { role } = useAuth();
+
+  const visibleItems = NAV_ITEMS.filter(item => !item.roles || item.roles.includes(role));
 
   return (
     <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {NAV_ITEMS.map(item => {
-        const isActive = pathname.startsWith(item.href);
+      {visibleItems.map(item => {
+        const isActive = item.href === '/'
+          ? pathname === '/'
+          : pathname.startsWith(item.href);
         return (
           <Link
             key={item.href}

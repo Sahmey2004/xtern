@@ -2,6 +2,7 @@
 Agent 2: Supplier Selector
 - Scores and selects the best supplier for each SKU using MCP
 - Uses weighted criteria: quality, delivery, lead time, cost
+- Returns primary supplier + up to 2 alternatives with sub-score metrics
 - Writes decision log
 """
 import json
@@ -49,6 +50,28 @@ def supplier_selector_node(state: PipelineState) -> PipelineState:
             recommended = result.get('recommended_supplier', {})
 
             if recommended:
+                # Extract sub-scores from score_breakdown if available
+                breakdown = recommended.get('score_breakdown', {})
+                quality_score = breakdown.get('quality', recommended.get('quality_score'))
+                delivery_performance = breakdown.get('delivery', recommended.get('delivery_performance'))
+                cost_rating = breakdown.get('cost', recommended.get('cost_rating'))
+
+                # Enrich all_candidates with sub-scores
+                enriched_candidates = []
+                for c in ranked[:3]:
+                    cb = c.get('score_breakdown', {})
+                    enriched_candidates.append({
+                        'supplier_id': c['supplier_id'],
+                        'supplier_name': c['supplier_name'],
+                        'unit_price': c['unit_price'],
+                        'score': c['score'],
+                        'lead_time_days': c['lead_time_days'],
+                        'moq_fit_pct': c.get('moq_fit_pct', 100),
+                        'quality_score': cb.get('quality', c.get('quality_score')),
+                        'delivery_performance': cb.get('delivery', c.get('delivery_performance')),
+                        'cost_rating': cb.get('cost', c.get('cost_rating')),
+                    })
+
                 supplier_selections.append({
                     'sku': sku,
                     'supplier_id': recommended['supplier_id'],
@@ -58,36 +81,42 @@ def supplier_selector_node(state: PipelineState) -> PipelineState:
                     'lead_time_days': recommended['lead_time_days'],
                     'net_qty': net_qty,
                     'urgency': req['urgency'],
+                    'quality_score': quality_score,
+                    'delivery_performance': delivery_performance,
+                    'cost_rating': cost_rating,
                     'rationale': (
                         f"Selected {recommended['supplier_name']} (score {recommended['score']}/100): "
                         f"${recommended['unit_price']:.2f}/unit, {recommended['lead_time_days']}d lead time, "
                         f"MOQ fit {recommended.get('moq_fit_pct', 100)}%"
                     ),
-                    'all_candidates': ranked[:3],  # keep top 3 for audit
+                    'concerns': [],
+                    'all_candidates': enriched_candidates,
                 })
                 total_scored += 1
         except Exception as e:
-            # Fallback: no supplier found
             supplier_selections.append({
                 'sku': sku,
                 'supplier_id': None,
                 'error': str(e),
                 'net_qty': net_qty,
                 'urgency': req['urgency'],
+                'concerns': [],
             })
 
-    # LLM summary
+    # LLM summary with concerns as bullet points
     prompt = f"""You are a procurement analyst. {total_scored} out of {len(net_requirements)} SKUs have been matched to suppliers.
 
 Sample selections (first 3):
 {json.dumps([s for s in supplier_selections[:3] if s.get('supplier_id')], indent=2)}
 
-Provide a brief procurement summary and confidence score in JSON:
-{{"rationale": "...", "confidence": 0.0_to_1.0}}"""
+Respond in JSON ONLY:
+{{"rationale": "One sentence why the primary suppliers were chosen.", "confidence": 0.0_to_1.0, "concerns": ["concern 1", "concern 2"]}}
+
+Keep rationale to ONE sentence. List real procurement concerns as short bullet strings (max 3). If no concerns, use empty array."""
     llm_error = None
     llm_used = False
     try:
-        llm = get_llm(max_tokens=1024, temperature=0.1)
+        llm = get_llm(max_tokens=512, temperature=0.1)
         response = llm.invoke([SystemMessage(content='Respond only with valid JSON.'), HumanMessage(content=prompt)])
         llm_used = True
     except RuntimeError as exc:
@@ -123,6 +152,7 @@ Provide a brief procurement summary and confidence score in JSON:
             ),
         }
 
+    concerns = []
     try:
         raw = response.content.strip()
         if raw.startswith('```'):
@@ -131,6 +161,9 @@ Provide a brief procurement summary and confidence score in JSON:
         parsed = json.loads(raw)
         rationale = parsed.get('rationale', '')
         confidence = float(parsed.get('confidence', 0.82))
+        concerns = parsed.get('concerns', [])
+        if not isinstance(concerns, list):
+            concerns = []
     except Exception as exc:
         llm_error = f'OpenAI response parse failed: {exc}'
         rationale = f'Supplier selected for {total_scored}/{len(net_requirements)} SKUs using weighted scoring.'
@@ -150,6 +183,7 @@ Provide a brief procurement summary and confidence score in JSON:
         'supplier_selections': supplier_selections,
         'supplier_rationale': rationale,
         'supplier_confidence': confidence,
+        'supplier_concerns': concerns,
         'current_agent': 'supplier_selector',
         'error': None,
         'agent_activity': update_agent_activity(
@@ -163,6 +197,7 @@ Provide a brief procurement summary and confidence score in JSON:
             details={
                 'matched_count': total_scored,
                 'net_requirements_count': len(net_requirements),
+                'concerns': concerns,
                 'top_suppliers': [
                     {
                         'sku': selection['sku'],
