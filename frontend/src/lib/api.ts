@@ -119,12 +119,16 @@ export async function continueAgent(
     unit_price: number;
     lead_time_days: number;
     score: number;
-  }[]
+  }[],
+  netRequirementsOverrides?: NetRequirement[]
 ) {
   const res = await fetch(`${BACKEND_URL}/pipeline/${runId}/continue/${nextAgent}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ supplier_overrides: supplierOverrides || null }),
+    body: JSON.stringify({
+      supplier_overrides: supplierOverrides || null,
+      net_requirements_overrides: netRequirementsOverrides || null,
+    }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data?.detail || `Agent ${nextAgent} failed.`);

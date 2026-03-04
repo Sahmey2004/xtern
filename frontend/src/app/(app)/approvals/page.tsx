@@ -270,10 +270,10 @@ export default function ApprovalsPage() {
                       </div>
                       <div style={{ display: 'flex', gap: 10 }}>
                         <button onClick={() => handleAction(po, 'approve')} disabled={submitting} className="btn-success">
-                          \u2713 Approve PO
+                          ✓ Approve PO
                         </button>
                         <button onClick={() => handleAction(po, 'reject')} disabled={submitting} className="btn-danger">
-                          \u2717 Reject PO
+                          ✕ Reject PO
                         </button>
                       </div>
                     </div>

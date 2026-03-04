@@ -11,8 +11,8 @@ export default function SidebarShell({ children }: { children: React.ReactNode }
   const router = useRouter();
   const pathname = usePathname();
 
-  // Login page renders without sidebar
-  if (pathname === '/login') {
+  // Pages with their own full-page layout render without sidebar
+  if (pathname === '/login' || pathname === '/') {
     return <>{children}</>;
   }
 

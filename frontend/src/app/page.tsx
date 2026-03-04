@@ -594,7 +594,7 @@ function Footer() {
 
 export default function LandingPage() {
   return (
-    <div style={{ minHeight: '100vh', background: '#0F0902', color: '#FFFACC', overflowX: 'hidden' }}>
+    <div style={{ minHeight: '100vh', width: '100%', background: '#0F0902', color: '#FFFACC', overflowX: 'hidden' }}>
       <Navigation />
       <HeroSection />
       <FeaturesSection />
