@@ -4,6 +4,8 @@ Agent 4: PO Compiler
 - Writes to Supabase via po-management MCP server
 - Produces human-readable summary
 """
+from datetime import date, timedelta
+
 from langchain_core.messages import SystemMessage, HumanMessage
 from agents.llm_config import get_llm, update_agent_activity
 from mcp_client.client import call_mcp_tool
@@ -17,6 +19,7 @@ def po_compiler_node(state: PipelineState) -> PipelineState:
     order_line_items = state.get('order_line_items', [])
     container_plan = state.get('container_plan', {})
     triggered_by = state.get('triggered_by', 'system')
+    triggered_by_user_id = state.get('triggered_by_user_id', '')
 
     if not order_line_items:
         error_message = 'No order line items to compile'
@@ -40,6 +43,9 @@ def po_compiler_node(state: PipelineState) -> PipelineState:
             'supplier_id': item['supplier_id'],
             'qty_ordered': item['qty'],
             'unit_price': item['unit_price'],
+            'expected_delivery_date': (date.today() + timedelta(days=int(item.get('lead_time_days', 0) or 0))).isoformat()
+            if item.get('lead_time_days') is not None
+            else None,
             'rationale': item.get('rationale', ''),
         }
         for item in order_line_items
@@ -86,14 +92,18 @@ Output plain text only (no JSON)."""
         po_notes = f"Draft PO: {len(po_lines)} SKUs, subtotal ${subtotal:,.2f}, est. freight ${freight:,.0f}, total ${total_usd:,.2f}."
 
     # Create PO in Supabase
+    create_po_args = {
+        'run_id': run_id,
+        'created_by': triggered_by,
+        'line_items': po_lines,
+        'container_plan': container_plan if container_plan else None,
+        'notes': po_notes,
+    }
+    if triggered_by_user_id:
+        create_po_args['created_by_user_id'] = triggered_by_user_id
+
     try:
-        result = call_mcp_tool('po', 'create_draft_po', {
-            'run_id': run_id,
-            'created_by': triggered_by,
-            'line_items': po_lines,
-            'container_plan': container_plan if container_plan else None,
-            'notes': po_notes,
-        })
+        result = call_mcp_tool('po', 'create_draft_po', create_po_args)
     except Exception as exc:
         error_message = f'{agent_name} could not create the draft PO: {exc}'
         return {

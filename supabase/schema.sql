@@ -1,14 +1,26 @@
 -- ─── CLEAN RESET (Optional/Caution) ──────────────────────────
- drop table if exists po_line_items         cascade;
+drop table if exists po_line_items         cascade;
 drop table if exists purchase_orders       cascade;
- drop table if exists decision_log          cascade;
- drop table if exists inventory             cascade;
- drop table if exists forecasts             cascade;drop table if exists supplier_products     cascade;
+drop table if exists decision_log          cascade;
+drop table if exists inventory             cascade;
+drop table if exists forecasts             cascade;
+drop table if exists supplier_products     cascade;
 drop table if exists products              cascade;
 drop table if exists suppliers             cascade;
- drop table if exists container_specs       cascade;
+drop table if exists container_specs       cascade;
 drop table if exists supplier_scoring_weights cascade;
+drop table if exists user_profiles         cascade;
 drop table if exists pipeline_runs         cascade; -- Found in some environments
+
+-- ─── USER PROFILES / ROLES ───────────────────────────────────
+create table if not exists user_profiles (
+  user_id      uuid primary key references auth.users(id) on delete cascade,
+  email        text not null unique,
+  full_name    text not null,
+  role         text not null check (role in ('administrator', 'po_manager')),
+  created_at   timestamptz default now(),
+  updated_at   timestamptz default now()
+);
 
 -- ─── PRODUCTS ────────────────────────────────────────────────
 create table if not exists products (
@@ -92,6 +104,7 @@ create table if not exists purchase_orders (
                    check (status in ('draft','pending_approval','approved','rejected')),
   created_at     timestamptz default now(),
   created_by     text not null default 'system',
+  created_by_user_id uuid,
   approved_by    text,
   approved_at    timestamptz,
   total_usd      numeric(14,2),
@@ -108,6 +121,7 @@ create table if not exists po_line_items (
   supplier_id text references suppliers(id),
   qty_ordered int  not null,
   unit_price  numeric(10,2) not null,
+  expected_delivery_date date,
   total_price numeric(14,2) generated always as (qty_ordered * unit_price) stored,
   rationale   text,
   created_at  timestamptz default now()
@@ -132,7 +146,9 @@ create index if not exists idx_forecasts_period  on forecasts(period);
 create index if not exists idx_sp_supplier       on supplier_products(supplier_id);
 create index if not exists idx_sp_sku            on supplier_products(sku);
 create index if not exists idx_po_status         on purchase_orders(status);
+create index if not exists idx_po_created_by_uid on purchase_orders(created_by_user_id);
 create index if not exists idx_po_line_po        on po_line_items(po_number);
+create index if not exists idx_po_line_eta       on po_line_items(expected_delivery_date);
 create index if not exists idx_dlog_run          on decision_log(run_id);
 create index if not exists idx_dlog_agent        on decision_log(agent_name);
 
@@ -149,3 +165,21 @@ alter table supplier_scoring_weights disable row level security;
 alter table purchase_orders       disable row level security;
 alter table po_line_items         disable row level security;
 alter table decision_log          disable row level security;
+
+-- Keep role metadata protected to each signed-in user.
+alter table user_profiles enable row level security;
+
+drop policy if exists "users can view own profile" on user_profiles;
+create policy "users can view own profile"
+on user_profiles
+for select
+to authenticated
+using (auth.uid() = user_id);
+
+drop policy if exists "users can update own profile" on user_profiles;
+create policy "users can update own profile"
+on user_profiles
+for update
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);

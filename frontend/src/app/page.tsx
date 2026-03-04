@@ -1,228 +1,155 @@
-'use client';
-import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import { fetchHealth } from '@/lib/api';
+import Link from 'next/link';
 
-type RecentPO = {
-  po_number: string;
-  status: string;
-  total_usd: number;
-  created_at: string;
-  supplier_id: string;
-};
+const FEATURE_CARDS = [
+  {
+    title: 'Demand Intelligence',
+    body: 'Convert live inventory and forecast signals into net replenishment plans without spreadsheet stitching.',
+    stat: '4-step planning flow',
+  },
+  {
+    title: 'Supplier Optimization',
+    body: 'Score suppliers against lead time, cost, and quality to generate traceable vendor decisions for every SKU.',
+    stat: 'Top-ranked vendor selection',
+  },
+  {
+    title: 'Container Planning',
+    body: 'Estimate freight and utilization before approval to reduce surprises in landed cost and logistics planning.',
+    stat: 'Container + freight estimates',
+  },
+  {
+    title: 'Human-in-the-loop Approvals',
+    body: 'Keep buyers and managers in control with draft PO review gates, notes, and decision visibility.',
+    stat: 'Approval queue + audit trail',
+  },
+  {
+    title: 'Agent Transparency',
+    body: 'Track each AI agent with status, confidence, summaries, and errors to improve trust and debugging speed.',
+    stat: 'Per-agent execution tabs',
+  },
+  {
+    title: 'Operational Dashboard',
+    body: 'Monitor inventory, forecasts, purchase orders, and decision logs in one shared operations surface.',
+    stat: 'Live Supabase data',
+  },
+];
 
-type RecentLog = {
-  id: number;
-  agent_name: string;
-  rationale: string;
-  confidence?: number;
-  timestamp: string;
-};
+const TRUST_ITEMS = [
+  'FastAPI + Next.js full-stack platform',
+  'LangGraph multi-agent orchestration',
+  'MCP server integration layer',
+  'Approval-safe procurement workflow',
+];
 
-export default function DashboardPage() {
-  const [backendOk, setBackendOk] = useState<boolean | null>(null);
-  const [counts, setCounts] = useState<Record<string, number>>({});
-  const [recentPOs, setRecentPOs] = useState<RecentPO[]>([]);
-  const [recentLogs, setRecentLogs] = useState<RecentLog[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Backend health
-    fetchHealth()
-      .then(d => setBackendOk(d.status === 'ok'))
-      .catch(() => setBackendOk(false));
-
-    // Supabase counts
-    async function load() {
-      const tables = ['products', 'suppliers', 'forecasts', 'inventory', 'purchase_orders', 'decision_log'];
-      const result: Record<string, number> = {};
-      for (const t of tables) {
-        const { count } = await supabase.from(t).select('*', { count: 'exact', head: true });
-        result[t] = count ?? 0;
-      }
-      setCounts(result);
-
-      // Recent POs
-      const { data: pos } = await supabase
-        .from('purchase_orders')
-        .select('po_number, status, total_usd, created_at, supplier_id')
-        .order('created_at', { ascending: false })
-        .limit(5);
-      setRecentPOs(pos || []);
-
-      // Recent decision logs
-      const { data: logs } = await supabase
-        .from('decision_log')
-        .select('id, agent_name, rationale, confidence, timestamp')
-        .order('timestamp', { ascending: false })
-        .limit(5);
-      setRecentLogs(logs || []);
-
-      setLoading(false);
-    }
-    load();
-  }, []);
-
-  const stats = [
-    { label: 'Products', value: counts.products, accent: 'stat-accent-blue', icon: '◆' },
-    { label: 'Suppliers', value: counts.suppliers, accent: 'stat-accent-green', icon: '◈' },
-    { label: 'Forecast Rows', value: counts.forecasts, accent: 'stat-accent-amber', icon: '◇' },
-    { label: 'Inventory', value: counts.inventory, accent: 'stat-accent-purple', icon: '□' },
-    { label: 'Purchase Orders', value: counts.purchase_orders, accent: 'stat-accent-cyan', icon: '○' },
-    { label: 'Decisions Logged', value: counts.decision_log, accent: 'stat-accent-red', icon: '≡' },
-  ];
-
-  const statusColor: Record<string, string> = {
-    draft: 'badge-amber',
-    approved: 'badge-green',
-    rejected: 'badge-red',
-    pending_approval: 'badge-blue',
-  };
-
-  const agentColor: Record<string, string> = {
-    DemandAnalyst: 'badge-blue',
-    SupplierSelector: 'badge-purple',
-    ContainerOptimizer: 'badge-amber',
-    POCompiler: 'badge-green',
-  };
-
+export default function LandingPage() {
   return (
-    <div style={{ maxWidth: 1100 }}>
-      {/* Header */}
-      <div style={{ marginBottom: 28 }} className="animate-fade-up">
-        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Dashboard</h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
-          System overview · Real-time data from Supabase
-        </p>
-      </div>
-
-      {/* System status bar */}
-      <div className="card animate-fade-up stagger-1" style={{ padding: '12px 20px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{
-            width: 8, height: 8, borderRadius: '50%',
-            background: backendOk === null ? 'var(--text-muted)' : backendOk ? 'var(--accent-green)' : 'var(--accent-red)',
-            boxShadow: backendOk ? '0 0 8px var(--accent-green)' : 'none',
-          }} />
-          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-            Backend: {backendOk === null ? 'Checking...' : backendOk ? 'Connected' : 'Offline'}
-          </span>
+    <div className="landing-shell">
+      <header className="landing-nav">
+        <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
+          <span className="brand-mark brand-mark-sm">P</span>
+          ProcurePilot
+        </Link>
+        <div className="flex items-center gap-3">
+          <Link href="/signin" className="button button-secondary">
+            Sign In
+          </Link>
+          <Link href="/dashboard" className="button button-secondary">
+            Product Tour
+          </Link>
+          <Link href="/pipeline" className="button button-primary">
+            Run Pipeline
+          </Link>
         </div>
-        <div style={{ width: 1, height: 16, background: 'var(--border)' }} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{
-            width: 8, height: 8, borderRadius: '50%',
-            background: counts.products > 0 ? 'var(--accent-green)' : 'var(--text-muted)',
-            boxShadow: counts.products > 0 ? '0 0 8px var(--accent-green)' : 'none',
-          }} />
-          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-            Supabase: {counts.products > 0 ? 'Connected' : 'Checking...'}
-          </span>
-        </div>
-        <div style={{ width: 1, height: 16, background: 'var(--border)' }} />
-        <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-          LLM: OpenAI
-        </span>
-      </div>
+      </header>
 
-      {/* Stat cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 12, marginBottom: 28 }}>
-        {stats.map((s, i) => (
-          <div key={s.label} className={`card stat-accent ${s.accent} animate-fade-up stagger-${i + 1}`}
-            style={{ padding: '16px 16px 14px', overflow: 'hidden' }}>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8, fontWeight: 500 }}>
-              {s.label}
+      <main className="landing-content">
+        <section className="hero-card">
+          <p className="eyebrow">AI Purchase Order Automation</p>
+          <h1 className="hero-title">
+            Move from procurement guesswork to
+            <span className="hero-highlight"> approval-ready purchase orders </span>
+            in minutes.
+          </h1>
+          <p className="hero-subtitle">
+            ProcurePilot combines demand planning, supplier intelligence, logistics estimation, and approval workflows
+            into a single operating system for modern supply chain teams.
+          </p>
+          <div className="hero-cta-row">
+            <Link href="/pipeline" className="button button-primary">
+              Launch Pipeline
+            </Link>
+            <Link href="/dashboard" className="button button-secondary">
+              Open Dashboard
+            </Link>
+          </div>
+          <p className="hero-notice">Dashboard route moved from `/` to `/dashboard` as part of the redesign.</p>
+        </section>
+
+        <section className="trust-strip">
+          {TRUST_ITEMS.map(item => (
+            <div key={item} className="trust-pill">
+              {item}
             </div>
-            {loading ? (
-              <div className="skeleton" style={{ width: 48, height: 28 }} />
-            ) : (
-              <div className="mono" style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>
-                {s.value?.toLocaleString() ?? '—'}
+          ))}
+        </section>
+
+        <section className="section-wrap">
+          <div className="section-header">
+            <p className="eyebrow">Core Product Pillars</p>
+            <h2 className="section-title">Bento modules designed for procurement velocity</h2>
+            <p className="section-subtitle">
+              Each block in the workflow maps directly to a high-friction procurement decision in real teams.
+            </p>
+          </div>
+
+          <div className="bento-grid">
+            {FEATURE_CARDS.map((feature, index) => (
+              <article key={feature.title} className={`bento-card bento-card-${(index % 3) + 1}`}>
+                <p className="bento-stat">{feature.stat}</p>
+                <h3 className="bento-title">{feature.title}</h3>
+                <p className="bento-body">{feature.body}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="section-wrap">
+          <div className="section-header">
+            <p className="eyebrow">How It Works</p>
+            <h2 className="section-title">One orchestrated pipeline, four specialized agents</h2>
+          </div>
+
+          <div className="flow-grid">
+            {[
+              { step: '01', title: 'Demand Analyst', text: 'Calculates replenishment requirements from inventory, forecast, and safety stock.' },
+              { step: '02', title: 'Supplier Selector', text: 'Ranks suppliers and recommends the best fit for each order line.' },
+              { step: '03', title: 'Container Optimizer', text: 'Estimates container usage and freight cost before PO approval.' },
+              { step: '04', title: 'PO Compiler', text: 'Generates a draft PO summary and routes it for human review.' },
+            ].map(step => (
+              <div key={step.step} className="flow-card">
+                <p className="flow-step">{step.step}</p>
+                <h3 className="flow-title">{step.title}</h3>
+                <p className="flow-body">{step.text}</p>
               </div>
-            )}
+            ))}
           </div>
-        ))}
-      </div>
+        </section>
 
-      {/* Two column: Recent POs + Recent Decisions */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-        {/* Recent POs */}
-        <div className="card animate-fade-up stagger-3" style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontWeight: 600, fontSize: 14 }}>Recent Purchase Orders</span>
-            <a href="/approvals" style={{ fontSize: 12, color: 'var(--accent-blue)', textDecoration: 'none' }}>View all →</a>
+        <section className="cta-panel">
+          <div>
+            <p className="eyebrow">Ready To Explore</p>
+            <h2 className="section-title">Start with the live product workspace</h2>
+            <p className="section-subtitle">Run a pipeline, inspect agent outputs, and review draft purchase orders end-to-end.</p>
           </div>
-          {loading ? (
-            <div style={{ padding: 20 }}>
-              {[1, 2, 3].map(i => <div key={i} className="skeleton" style={{ height: 20, marginBottom: 12 }} />)}
-            </div>
-          ) : recentPOs.length === 0 ? (
-            <div style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
-              No purchase orders yet. <a href="/pipeline" style={{ color: 'var(--accent-blue)' }}>Run a pipeline</a>
-            </div>
-          ) : (
-            <div>
-              {recentPOs.map(po => (
-                <div key={po.po_number} style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <span className="mono" style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
-                      {po.po_number}
-                    </span>
-                    <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 8 }}>
-                      {po.supplier_id}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <span className="mono" style={{ fontSize: 13, fontWeight: 600 }}>
-                      ${po.total_usd?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </span>
-                    <span className={`badge ${statusColor[po.status] || 'badge-blue'}`}>
-                      {po.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Recent Decisions */}
-        <div className="card animate-fade-up stagger-4" style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontWeight: 600, fontSize: 14 }}>Recent Agent Decisions</span>
-            <a href="/logs" style={{ fontSize: 12, color: 'var(--accent-blue)', textDecoration: 'none' }}>View all →</a>
+          <div className="cta-actions">
+            <Link href="/dashboard" className="button button-secondary">
+              View Dashboard
+            </Link>
+            <Link href="/pipeline" className="button button-primary">
+              Run Pipeline
+            </Link>
           </div>
-          {loading ? (
-            <div style={{ padding: 20 }}>
-              {[1, 2, 3].map(i => <div key={i} className="skeleton" style={{ height: 20, marginBottom: 12 }} />)}
-            </div>
-          ) : recentLogs.length === 0 ? (
-            <div style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
-              No decisions logged yet
-            </div>
-          ) : (
-            <div>
-              {recentLogs.map(log => (
-                <div key={log.id} style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                  <span className={`badge ${agentColor[log.agent_name] || 'badge-blue'}`} style={{ marginTop: 2, flexShrink: 0 }}>
-                    {log.agent_name?.replace(/([A-Z])/g, ' $1').trim().split(' ')[0]}
-                  </span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {log.rationale}
-                    </p>
-                  </div>
-                  {log.confidence != null && (
-                    <span className="mono" style={{ fontSize: 12, color: 'var(--text-muted)', flexShrink: 0 }}>
-                      {Math.round(log.confidence * 100)}%
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
   );
 }

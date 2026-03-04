@@ -74,6 +74,7 @@ def container_optimizer_node(state: PipelineState) -> PipelineState:
             'supplier_id': sel['supplier_id'],
             'qty': qty,
             'unit_price': unit_price,
+            'lead_time_days': sel.get('lead_time_days'),
             'rationale': sel.get('rationale', ''),
         })
 

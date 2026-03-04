@@ -9,6 +9,8 @@ class PipelineState(TypedDict, total=False):
     # ── Run metadata ──────────────────────────────────────────
     run_id: str
     triggered_by: str           # user who started the run
+    triggered_by_user_id: str
+    triggered_by_role: str
     planning_horizon_months: int
 
     # ── SKU selection ─────────────────────────────────────────
@@ -17,7 +19,7 @@ class PipelineState(TypedDict, total=False):
     # ── Agent 1: Demand Analyst ───────────────────────────────
     inventory_snapshot: List[Dict[str, Any]]
     forecast_summary: List[Dict[str, Any]]   # {sku, total_forecast, months}
-    net_requirements: List[Dict[str, Any]]   # {sku, net_qty, urgency}
+    net_requirements: List[Dict[str, Any]]   # concise per-SKU requirement rows
     demand_rationale: str
     demand_confidence: float
 

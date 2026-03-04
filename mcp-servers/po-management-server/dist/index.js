@@ -19,11 +19,13 @@ server.tool('ping', 'Health check', {}, async () => ({
 server.tool('create_draft_po', 'Creates a draft Purchase Order with line items in Supabase. Returns the PO number.', {
     run_id: z.string().describe('The pipeline run ID'),
     created_by: z.string().optional().describe('User who triggered the run'),
+    created_by_user_id: z.string().optional().describe('UUID of the user who triggered the run'),
     line_items: z.array(z.object({
         sku: z.string(),
         supplier_id: z.string(),
         qty_ordered: z.number().positive(),
         unit_price: z.number().positive(),
+        expected_delivery_date: z.string().optional(),
         rationale: z.string().optional(),
     })).describe('Line items for this PO'),
     container_plan: z.object({
@@ -35,7 +37,7 @@ server.tool('create_draft_po', 'Creates a draft Purchase Order with line items i
         estimated_freight_usd: z.number(),
     }).optional().describe('Container plan from logistics agent'),
     notes: z.string().optional(),
-}, async ({ run_id, created_by = 'system', line_items, container_plan, notes }) => {
+}, async ({ run_id, created_by = 'system', created_by_user_id, line_items, container_plan, notes }) => {
     // Generate PO number: PO-YYYYMMDD-XXXX
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const suffix = Math.floor(1000 + Math.random() * 9000);
@@ -43,15 +45,22 @@ server.tool('create_draft_po', 'Creates a draft Purchase Order with line items i
     // Calculate total
     const total_usd = line_items.reduce((sum, item) => sum + item.qty_ordered * item.unit_price, 0);
     // Insert PO header
-    const { error: poError } = await supabase.from('purchase_orders').insert({
+    const poInsertPayload = {
         po_number,
         status: 'draft',
         created_by,
+        created_by_user_id: created_by_user_id ?? null,
         run_id,
         total_usd: Math.round(total_usd * 100) / 100,
         container_plan: container_plan ?? null,
         notes: notes ?? null,
-    });
+    };
+    let { error: poError } = await supabase.from('purchase_orders').insert(poInsertPayload);
+    if (poError && poError.message.includes('created_by_user_id')) {
+        delete poInsertPayload.created_by_user_id;
+        const retry = await supabase.from('purchase_orders').insert(poInsertPayload);
+        poError = retry.error;
+    }
     if (poError)
         throw new Error(`create_draft_po insert failed: ${poError.message}`);
     // Insert line items
@@ -61,9 +70,19 @@ server.tool('create_draft_po', 'Creates a draft Purchase Order with line items i
         supplier_id: item.supplier_id,
         qty_ordered: item.qty_ordered,
         unit_price: item.unit_price,
+        expected_delivery_date: item.expected_delivery_date ?? null,
         rationale: item.rationale ?? null,
     }));
-    const { error: lineError } = await supabase.from('po_line_items').insert(lineRows);
+    let { error: lineError } = await supabase.from('po_line_items').insert(lineRows);
+    if (lineError && lineError.message.includes('expected_delivery_date')) {
+        const fallbackRows = lineRows.map(row => {
+            const next = { ...row };
+            delete next.expected_delivery_date;
+            return next;
+        });
+        const retry = await supabase.from('po_line_items').insert(fallbackRows);
+        lineError = retry.error;
+    }
     if (lineError)
         throw new Error(`create_draft_po line items failed: ${lineError.message}`);
     return {
@@ -83,20 +102,72 @@ server.tool('create_draft_po', 'Creates a draft Purchase Order with line items i
 server.tool('get_pos', 'Returns Purchase Orders, optionally filtered by status. Includes line items.', {
     status: z.enum(['draft', 'pending_approval', 'approved', 'rejected', 'all']).optional().describe('Filter by status (default: all)'),
     run_id: z.string().optional().describe('Filter by pipeline run ID'),
+    created_by_user_id: z.string().optional().describe('Filter by creator user UUID'),
     limit: z.number().min(1).max(50).optional().describe('Max results (default 20)'),
-}, async ({ status, run_id, limit = 20 }) => {
+}, async ({ status, run_id, created_by_user_id, limit = 20 }) => {
     let query = supabase.from('purchase_orders').select(`
       *,
-      po_line_items (sku, supplier_id, qty_ordered, unit_price, total_price, rationale)
+      po_line_items (sku, supplier_id, qty_ordered, unit_price, expected_delivery_date, total_price, rationale)
     `);
     if (status && status !== 'all')
         query = query.eq('status', status);
     if (run_id)
         query = query.eq('run_id', run_id);
+    if (created_by_user_id)
+        query = query.eq('created_by_user_id', created_by_user_id);
     const { data, error } = await query.order('created_at', { ascending: false }).limit(limit);
     if (error)
         throw new Error(`get_pos failed: ${error.message}`);
     return { content: [{ type: 'text', text: JSON.stringify({ purchase_orders: data, count: data?.length ?? 0 }) }] };
+});
+// ─── OPEN COMMITMENTS ─────────────────────────────────────────
+server.tool('get_open_commitments', 'Returns open PO quantities and nearest ETA by SKU, optionally broken down by supplier.', {
+    skus: z.array(z.string()).optional().describe('Filter to specific SKUs'),
+    supplier_ids: z.array(z.string()).optional().describe('Filter to specific supplier IDs'),
+    statuses: z.array(z.enum(['draft', 'pending_approval', 'approved', 'rejected'])).optional().describe('PO statuses to include'),
+}, async ({ skus, supplier_ids, statuses = ['draft', 'pending_approval', 'approved'] }) => {
+    let query = supabase
+        .from('po_line_items')
+        .select('sku, supplier_id, qty_ordered, expected_delivery_date, purchase_orders!inner(status)');
+    if (skus && skus.length > 0)
+        query = query.in('sku', skus);
+    if (supplier_ids && supplier_ids.length > 0)
+        query = query.in('supplier_id', supplier_ids);
+    if (statuses && statuses.length > 0)
+        query = query.in('purchase_orders.status', statuses);
+    const { data, error } = await query;
+    if (error)
+        throw new Error(`get_open_commitments failed: ${error.message}`);
+    const bySku = {};
+    const bySupplier = {};
+    for (const row of (data ?? [])) {
+        const sku = row.sku;
+        const supplierId = row.supplier_id;
+        const qty = Number(row.qty_ordered ?? 0);
+        const eta = row.expected_delivery_date ?? null;
+        if (!bySku[sku])
+            bySku[sku] = { open_po_qty: 0, next_open_po_eta: null };
+        bySku[sku].open_po_qty += qty;
+        if (eta && (!bySku[sku].next_open_po_eta || eta < bySku[sku].next_open_po_eta)) {
+            bySku[sku].next_open_po_eta = eta;
+        }
+        if (!bySupplier[sku])
+            bySupplier[sku] = {};
+        if (!bySupplier[sku][supplierId])
+            bySupplier[sku][supplierId] = { open_po_qty: 0, next_open_po_eta: null };
+        bySupplier[sku][supplierId].open_po_qty += qty;
+        if (eta && (!bySupplier[sku][supplierId].next_open_po_eta || eta < bySupplier[sku][supplierId].next_open_po_eta)) {
+            bySupplier[sku][supplierId].next_open_po_eta = eta;
+        }
+    }
+    return {
+        content: [
+            {
+                type: 'text',
+                text: JSON.stringify({ by_sku: bySku, by_supplier: bySupplier, row_count: (data ?? []).length }),
+            },
+        ],
+    };
 });
 // ─── UPDATE PO STATUS ─────────────────────────────────────────
 server.tool('update_po_status', 'Updates a Purchase Order status. Use for approval, rejection, or submission for review.', {
@@ -109,6 +180,13 @@ server.tool('update_po_status', 'Updates a Purchase Order status. Use for approv
         new_qty: z.number().positive(),
     })).optional().describe('Planner quantity overrides before submission'),
 }, async ({ po_number, new_status, reviewer, notes, line_item_overrides }) => {
+    const { data: existingPO, error: existingPOError } = await supabase
+        .from('purchase_orders')
+        .select('po_number, run_id, status')
+        .eq('po_number', po_number)
+        .single();
+    if (existingPOError)
+        throw new Error(`update_po_status lookup failed: ${existingPOError.message}`);
     const updateData = { status: new_status };
     if (new_status === 'approved' || new_status === 'rejected') {
         updateData.approved_by = reviewer ?? 'unknown';
@@ -136,6 +214,41 @@ server.tool('update_po_status', 'Updates a Purchase Order status. Use for approv
     const { error } = await supabase.from('purchase_orders').update(updateData).eq('po_number', po_number);
     if (error)
         throw new Error(`update_po_status failed: ${error.message}`);
+    const logRationale = `Human reviewer ${reviewer ?? 'unknown'} set ${po_number} to ${new_status}.`;
+    const logPayload = {
+        run_id: existingPO?.run_id ?? `approval-${po_number}`,
+        po_number,
+        agent_name: 'HumanApproval',
+        timestamp: new Date().toISOString(),
+        inputs: {
+            previous_status: existingPO?.status ?? null,
+            reviewer: reviewer ?? 'unknown',
+            notes: notes ?? '',
+            line_item_overrides_count: line_item_overrides?.length ?? 0,
+        },
+        output: {
+            new_status,
+            po_number,
+        },
+        confidence: 1.0,
+        rationale: logRationale,
+    };
+    let { error: logError } = await supabase.from('decision_log').insert(logPayload);
+    if (logError) {
+        // Backward-compatible retry in case older schema is missing some optional JSON fields.
+        const fallbackLogPayload = {
+            run_id: existingPO?.run_id ?? `approval-${po_number}`,
+            po_number,
+            agent_name: 'HumanApproval',
+            timestamp: new Date().toISOString(),
+            rationale: logRationale,
+            confidence: 1.0,
+        };
+        const retry = await supabase.from('decision_log').insert(fallbackLogPayload);
+        logError = retry.error;
+    }
+    if (logError)
+        throw new Error(`update_po_status decision log failed: ${logError.message}`);
     return {
         content: [{
                 type: 'text',
@@ -183,7 +296,7 @@ server.tool('get_decision_log', 'Returns decision log entries for a run or PO.',
         query = query.eq('po_number', po_number);
     if (agent_name)
         query = query.eq('agent_name', agent_name);
-    const { data, error } = await query.order('timestamp', { ascending: true }).limit(limit);
+    const { data, error } = await query.order('timestamp', { ascending: false }).limit(limit);
     if (error)
         throw new Error(`get_decision_log failed: ${error.message}`);
     return { content: [{ type: 'text', text: JSON.stringify({ entries: data, count: data?.length ?? 0 }) }] };

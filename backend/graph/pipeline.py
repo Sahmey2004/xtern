@@ -61,7 +61,14 @@ def build_pipeline() -> StateGraph:
 pipeline = build_pipeline()
 
 
-def run_pipeline(skus: list[str] = None, triggered_by: str = 'system', horizon: int = 3) -> PipelineState:
+def run_pipeline(
+    skus: list[str] = None,
+    *,
+    triggered_by: str = 'system',
+    triggered_by_user_id: str = '',
+    triggered_by_role: str = 'po_manager',
+    horizon: int = 3,
+) -> PipelineState:
     """
     Runs the full PO automation pipeline.
     Returns the final state including po_number, approval_status, and all agent outputs.
@@ -69,6 +76,8 @@ def run_pipeline(skus: list[str] = None, triggered_by: str = 'system', horizon: 
     initial_state: PipelineState = {
         'run_id': str(uuid.uuid4()),
         'triggered_by': triggered_by,
+        'triggered_by_user_id': triggered_by_user_id,
+        'triggered_by_role': triggered_by_role,
         'planning_horizon_months': horizon,
         'skus_to_plan': skus or [],
         'approval_status': 'pending',

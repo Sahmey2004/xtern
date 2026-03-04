@@ -17,6 +17,9 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGci...
 OPENAI_API_KEY=sk-...
 OPENAI_MODEL=gpt-4o-mini
 NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+DEMO_ADMIN_PASSWORD=ChangeMe123!
+DEMO_MANAGER1_PASSWORD=ChangeMe123!
+DEMO_MANAGER2_PASSWORD=ChangeMe123!
 ```
 
 Get Supabase keys from: Supabase Dashboard → Project Settings → API
@@ -45,7 +48,19 @@ python seed_data.py
 
 Expected output: 60 products, 6 suppliers, ~195 supplier-products, 720 forecasts, 60 inventory records
 
-## 5. Start the backend
+## 5. Seed demo users and roles
+
+```bash
+cd data
+python seed_users.py
+```
+
+Creates:
+- `admin@procurepilot.demo` (role: `administrator`)
+- `manager1@procurepilot.demo` (role: `po_manager`)
+- `manager2@procurepilot.demo` (role: `po_manager`)
+
+## 6. Start the backend
 
 ```bash
 cd backend
@@ -57,7 +72,7 @@ uvicorn main:app --reload
 
 Test: http://localhost:8000/health
 
-## 6. Start the frontend
+## 7. Start the frontend
 
 ```bash
 cd frontend
@@ -67,14 +82,16 @@ npm run dev
 
 Open: http://localhost:3000
 
-## 7. Run your first pipeline
+## 8. Sign in and run your first pipeline
 
-1. Go to http://localhost:3000/pipeline
-2. Select some SKUs (or leave empty for auto-selection)
-3. Click "Run Pipeline"
-4. Watch agents execute (takes ~30-60s)
-5. Go to /approvals to review and approve the draft PO
-6. Go to /logs to see the full audit trail
+1. Go to http://localhost:3000/signin
+2. Sign in with one of the seeded users.
+3. Go to http://localhost:3000/pipeline
+4. Select SKUs (or leave empty for auto-selection)
+5. Click "Run Pipeline"
+6. Watch agents execute (takes ~30-60s)
+7. Admin users can go to `/approvals` and `/logs`
+8. Both roles can use `/data`
 
 ## Verifying things work
 
