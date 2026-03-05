@@ -21,6 +21,8 @@ RUN pip install --no-cache-dir -r requirements-prod.txt
 # Copy backend source
 COPY backend/ ./backend/
 
+ENV MCP_SERVERS_DIR=/app/mcp-servers
+
 WORKDIR /app/backend
 
 EXPOSE 8000

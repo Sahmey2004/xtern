@@ -13,7 +13,8 @@ type NavItem = {
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/', label: 'Dashboard', icon: '◆' },
+  { href: '/', label: 'Home', icon: '⌂' },
+  { href: '/dashboard', label: 'Dashboard', icon: '◆' },
   { href: '/pipeline', label: 'Run Pipeline', icon: '▷' },
   { href: '/approvals', label: 'Approval Queue', icon: '◎', roles: ['administrator'] },
   { href: '/logs', label: 'Decision Log', icon: '≡', roles: ['administrator'] },
@@ -31,9 +32,7 @@ export default function NavLinks() {
   return (
     <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {visibleItems.map(item => {
-        const isActive = item.href === '/'
-          ? pathname === '/'
-          : pathname.startsWith(item.href);
+        const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
         return (
           <Link
             key={item.href}

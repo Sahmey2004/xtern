@@ -7,13 +7,17 @@ import subprocess
 import os
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).parent.parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+
+# Allow override via env var; useful when the resolved path differs in containers
+_MCP_ROOT_ENV = os.environ.get('MCP_SERVERS_DIR')
+MCP_ROOT = Path(_MCP_ROOT_ENV) if _MCP_ROOT_ENV else PROJECT_ROOT / 'mcp-servers'
 
 MCP_SERVERS = {
-    'erp':      PROJECT_ROOT / 'mcp-servers' / 'erp-data-server',
-    'supplier': PROJECT_ROOT / 'mcp-servers' / 'supplier-data-server',
-    'logistics': PROJECT_ROOT / 'mcp-servers' / 'logistics-server',
-    'po':       PROJECT_ROOT / 'mcp-servers' / 'po-management-server',
+    'erp':      MCP_ROOT / 'erp-data-server',
+    'supplier': MCP_ROOT / 'supplier-data-server',
+    'logistics': MCP_ROOT / 'logistics-server',
+    'po':       MCP_ROOT / 'po-management-server',
 }
 
 
