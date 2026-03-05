@@ -1,607 +1,360 @@
-'use client';
+'use client'
+import React from 'react'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { InfiniteSlider } from '@/components/ui/infinite-slider'
+import { ProgressiveBlur } from '@/components/ui/progressive-blur'
+import { cn } from '@/lib/utils'
+import { Menu, X, Brain, Target, Package, FileCheck, ShieldCheck, Users, ArrowRight, Zap } from 'lucide-react'
 
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import Link from 'next/link';
-import {
-  Brain, ShieldCheck, ArrowRight, ChevronRight, Zap, Target, Users,
-  Package, FileCheck,
-} from 'lucide-react';
+/* ── Logo ────────────────────────────────────────────────────── */
 
-/* ── Animated Background ─────────────────────────────────────── */
-
-function AnimatedBackground() {
-  return (
-    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-      <motion.div
-        animate={{ scale: [1, 1.2, 1], opacity: [0.12, 0.2, 0.12] }}
-        transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-        style={{
-          position: 'absolute', top: '-10%', right: '-5%',
-          width: 600, height: 600, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(43,65,98,0.35) 0%, transparent 70%)',
-        }}
-      />
-      <motion.div
-        animate={{ scale: [1, 1.15, 1], opacity: [0.1, 0.18, 0.1] }}
-        transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-        style={{
-          position: 'absolute', bottom: '-10%', left: '-5%',
-          width: 500, height: 500, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(157,92,99,0.3) 0%, transparent 70%)',
-        }}
-      />
-      <div style={{
-        position: 'absolute', inset: 0, opacity: 0.03,
-        backgroundImage: `linear-gradient(rgba(255,250,204,0.3) 1px, transparent 1px),
-                          linear-gradient(90deg, rgba(255,250,204,0.3) 1px, transparent 1px)`,
-        backgroundSize: '60px 60px',
-      }} />
-    </div>
-  );
-}
-
-/* ── Floating Particles ──────────────────────────────────────── */
-
-function FloatingParticles() {
-  const [particles, setParticles] = useState<{ id: number; x: number; y: number; size: number; duration: number }[]>([]);
-
-  useEffect(() => {
-    setParticles(
-      Array.from({ length: 20 }, (_, i) => ({
-        id: i,
-        x: Math.random() * 100,
-        y: Math.random() * 100,
-        size: Math.random() * 3 + 1,
-        duration: Math.random() * 10 + 10,
-      }))
-    );
-  }, []);
-
-  return (
-    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-      {particles.map(p => (
-        <motion.div
-          key={p.id}
-          animate={{ y: [0, -30, 0], opacity: [0.15, 0.4, 0.15] }}
-          transition={{ duration: p.duration, repeat: Infinity, ease: 'easeInOut' }}
-          style={{
-            position: 'absolute',
-            left: `${p.x}%`,
-            top: `${p.y}%`,
-            width: p.size,
-            height: p.size,
-            borderRadius: '50%',
-            background: 'rgba(255,250,204,0.4)',
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-/* ── Navigation ──────────────────────────────────────────────── */
-
-function Navigation() {
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', onScroll);
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
-  return (
-    <motion.nav
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.6, ease: 'easeOut' }}
-      style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
-        padding: '16px 40px',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        background: scrolled ? 'rgba(15,9,2,0.85)' : 'transparent',
-        backdropFilter: scrolled ? 'blur(16px)' : 'none',
-        borderBottom: scrolled ? '1px solid rgba(133,135,124,0.12)' : '1px solid transparent',
-        transition: 'all 0.3s ease',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{
-          width: 32, height: 32, borderRadius: 8,
-          background: 'linear-gradient(135deg, #2B4162, #9D5C63)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <Brain size={18} color="#FFFACC" />
+const Logo = ({ className }: { className?: string }) => (
+    <div className={cn('flex items-center gap-2', className)}>
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#2B4162] to-[#9D5C63]">
+            <Brain className="h-4 w-4 text-[#FFFACC]" />
         </div>
-        <span style={{ fontSize: 18, fontWeight: 700, color: '#FFFACC', letterSpacing: '-0.02em' }}>
-          ProcureAI
-        </span>
-      </div>
+        <span className="text-lg font-bold tracking-tight text-[#FFFACC]">ProcureAI</span>
+    </div>
+)
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
-        {['Features', 'Pipeline', 'Results'].map(label => (
-          <a
-            key={label}
-            href={`#${label.toLowerCase()}`}
-            style={{ color: '#85877C', fontSize: 14, textDecoration: 'none', fontWeight: 500, transition: 'color 0.2s' }}
-            onMouseEnter={e => (e.currentTarget.style.color = '#FFFACC')}
-            onMouseLeave={e => (e.currentTarget.style.color = '#85877C')}
-          >
-            {label}
-          </a>
-        ))}
-        <Link
-          href="/dashboard"
-          style={{
-            padding: '8px 20px', borderRadius: 8,
-            background: 'linear-gradient(135deg, #2B4162, #9D5C63)',
-            color: '#FFFACC', fontSize: 13, fontWeight: 600,
-            textDecoration: 'none', transition: 'opacity 0.2s',
-          }}
-        >
-          Open Dashboard
-        </Link>
-      </div>
-    </motion.nav>
-  );
+/* ── Header ──────────────────────────────────────────────────── */
+
+const menuItems = [
+    { name: 'Features', href: '#features' },
+    { name: 'Pipeline', href: '#pipeline' },
+    { name: 'Results', href: '#results' },
+    { name: 'About', href: '#about' },
+]
+
+const HeroHeader = () => {
+    const [menuState, setMenuState] = React.useState(false)
+    return (
+        <header>
+            <nav
+                data-state={menuState && 'active'}
+                className="group fixed z-20 w-full border-b border-[rgba(133,135,124,0.12)] bg-[#0F0902]/50 backdrop-blur-3xl">
+                <div className="mx-auto max-w-6xl px-6 transition-all duration-300">
+                    <div className="relative flex flex-wrap items-center justify-between gap-6 py-3 lg:gap-0 lg:py-4">
+                        <div className="flex w-full items-center justify-between gap-12 lg:w-auto">
+                            <Link href="/" aria-label="home" className="flex items-center space-x-2">
+                                <Logo />
+                            </Link>
+
+                            <button
+                                onClick={() => setMenuState(!menuState)}
+                                aria-label={menuState ? 'Close Menu' : 'Open Menu'}
+                                className="relative z-20 -m-2.5 -mr-4 block cursor-pointer p-2.5 lg:hidden">
+                                <Menu className="group-data-[state=active]:rotate-180 group-data-[state=active]:scale-0 group-data-[state=active]:opacity-0 m-auto size-6 text-[#FFFACC] duration-200" />
+                                <X className="group-data-[state=active]:rotate-0 group-data-[state=active]:scale-100 group-data-[state=active]:opacity-100 absolute inset-0 m-auto size-6 -rotate-180 scale-0 text-[#FFFACC] opacity-0 duration-200" />
+                            </button>
+
+                            <div className="hidden lg:block">
+                                <ul className="flex gap-8 text-sm">
+                                    {menuItems.map((item, index) => (
+                                        <li key={index}>
+                                            <Link
+                                                href={item.href}
+                                                className="block text-[#85877C] duration-150 hover:text-[#FFFACC]">
+                                                <span>{item.name}</span>
+                                            </Link>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="group-data-[state=active]:block lg:group-data-[state=active]:flex mb-6 hidden w-full flex-wrap items-center justify-end space-y-8 rounded-3xl border border-[rgba(133,135,124,0.12)] bg-[#0F0902] p-6 shadow-2xl md:flex-nowrap lg:m-0 lg:flex lg:w-fit lg:gap-6 lg:space-y-0 lg:border-transparent lg:bg-transparent lg:p-0 lg:shadow-none">
+                            <div className="lg:hidden">
+                                <ul className="space-y-6 text-base">
+                                    {menuItems.map((item, index) => (
+                                        <li key={index}>
+                                            <Link
+                                                href={item.href}
+                                                className="block text-[#85877C] duration-150 hover:text-[#FFFACC]">
+                                                <span>{item.name}</span>
+                                            </Link>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                            <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
+                                <Button asChild variant="outline" size="sm" className="border-[rgba(133,135,124,0.3)] bg-transparent text-[#FFFACC] hover:bg-[#2F2504] hover:text-[#FFFACC]">
+                                    <Link href="/login">
+                                        <span>Login</span>
+                                    </Link>
+                                </Button>
+                                <Button asChild size="sm" className="bg-gradient-to-r from-[#2B4162] to-[#9D5C63] text-[#FFFACC] hover:opacity-90">
+                                    <Link href="/pipeline">
+                                        <span>Open Dashboard</span>
+                                    </Link>
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </header>
+    )
 }
 
 /* ── Hero Section ────────────────────────────────────────────── */
 
-function HeroSection() {
-  return (
-    <section style={{
-      position: 'relative', minHeight: '100vh',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: '120px 40px 80px',
-      overflow: 'hidden',
-    }}>
-      <AnimatedBackground />
-      <FloatingParticles />
+function HeroMain() {
+    return (
+        <>
+            <HeroHeader />
+            <main className="overflow-x-hidden bg-[#0F0902] text-[#FFFACC]">
+                {/* Hero */}
+                <section>
+                    <div className="pb-24 pt-12 md:pb-32 lg:pb-56 lg:pt-44">
+                        <div className="relative mx-auto flex max-w-6xl flex-col px-6 lg:block">
+                            <div className="mx-auto max-w-lg text-center lg:ml-0 lg:w-1/2 lg:text-left">
+                                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[rgba(43,65,98,0.3)] bg-[rgba(43,65,98,0.2)] px-4 py-1.5">
+                                    <Zap className="h-3.5 w-3.5 text-[#4A6FA8]" />
+                                    <span className="text-xs font-medium text-[#4A6FA8]">AI-Powered Supply Chain</span>
+                                </div>
+                                <h1 className="mt-8 max-w-2xl text-balance text-5xl font-medium md:text-6xl lg:mt-16 xl:text-7xl">
+                                    Intelligent{' '}
+                                    <span className="bg-gradient-to-r from-[#4A6FA8] to-[#9D5C63] bg-clip-text text-transparent">
+                                        Purchase Orders
+                                    </span>{' '}
+                                    on Autopilot
+                                </h1>
+                                <p className="mt-8 max-w-2xl text-pretty text-lg text-[#85877C]">
+                                    Four AI agents collaborate in real-time to analyze demand, select suppliers,
+                                    optimize containers, and compile purchase orders — with human oversight at every step.
+                                </p>
 
-      <div style={{ position: 'relative', zIndex: 10, maxWidth: 900, textAlign: 'center' }}>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            padding: '6px 16px', borderRadius: 100, marginBottom: 32,
-            background: 'rgba(43,65,98,0.2)', border: '1px solid rgba(43,65,98,0.3)',
-          }}
-        >
-          <Zap size={14} color="#4A6FA8" />
-          <span style={{ fontSize: 13, color: '#4A6FA8', fontWeight: 500 }}>
-            AI-Powered Supply Chain Automation
-          </span>
-        </motion.div>
+                                <div className="mt-12 flex flex-col items-center justify-center gap-2 sm:flex-row lg:justify-start">
+                                    <Button asChild size="lg" className="bg-gradient-to-r from-[#2B4162] to-[#9D5C63] px-5 text-base text-[#FFFACC] shadow-[0_0_40px_rgba(43,65,98,0.3)] hover:opacity-90">
+                                        <Link href="/pipeline">
+                                            <span className="text-nowrap">Run Pipeline</span>
+                                            <ArrowRight className="ml-2 h-4 w-4" />
+                                        </Link>
+                                    </Button>
+                                    <Button asChild size="lg" variant="ghost" className="px-5 text-base text-[#FFFACC] hover:bg-[#2F2504]">
+                                        <Link href="/dashboard">
+                                            <span className="text-nowrap">View Dashboard</span>
+                                        </Link>
+                                    </Button>
+                                </div>
+                            </div>
+                            <img
+                                className="pointer-events-none order-first ml-auto h-56 w-full object-cover opacity-80 sm:h-96 lg:absolute lg:inset-0 lg:-right-20 lg:-top-96 lg:order-last lg:h-max lg:w-2/3 lg:object-contain dark:mix-blend-lighten"
+                                src="https://ik.imagekit.io/lrigu76hy/tailark/abstract-bg.jpg?updatedAt=1745733473768"
+                                alt="Abstract Background"
+                                height="4000"
+                                width="3000"
+                            />
+                        </div>
+                    </div>
+                </section>
 
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          style={{
-            fontSize: 'clamp(40px, 6vw, 72px)', fontWeight: 800,
-            lineHeight: 1.08, letterSpacing: '-0.03em',
-            color: '#FFFACC', margin: '0 0 24px',
-          }}
-        >
-          Intelligent
-          <br />
-          <span style={{
-            background: 'linear-gradient(135deg, #4A6FA8, #9D5C63)',
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-          }}>
-            Purchase Orders
-          </span>
-          <br />
-          on Autopilot
-        </motion.h1>
+                {/* Logo Slider */}
+                <section className="bg-[#0F0902] pb-16 md:pb-32">
+                    <div className="group relative m-auto max-w-6xl px-6">
+                        <div className="flex flex-col items-center md:flex-row">
+                            <div className="md:max-w-44 md:border-r md:border-[rgba(133,135,124,0.18)] md:pr-6">
+                                <p className="text-end text-sm text-[#85877C]">Powering enterprise teams</p>
+                            </div>
+                            <div className="relative py-6 md:w-[calc(100%-11rem)]">
+                                <InfiniteSlider speedOnHover={20} speed={40} gap={112}>
+                                    <div className="flex items-center gap-2">
+                                        <Brain className="h-5 w-5 text-[#85877C]" />
+                                        <span className="text-sm font-medium text-[#85877C]">LangGraph</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Package className="h-5 w-5 text-[#85877C]" />
+                                        <span className="text-sm font-medium text-[#85877C]">MCP Servers</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Target className="h-5 w-5 text-[#85877C]" />
+                                        <span className="text-sm font-medium text-[#85877C]">OpenAI</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <ShieldCheck className="h-5 w-5 text-[#85877C]" />
+                                        <span className="text-sm font-medium text-[#85877C]">Supabase</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <FileCheck className="h-5 w-5 text-[#85877C]" />
+                                        <span className="text-sm font-medium text-[#85877C]">Next.js</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Users className="h-5 w-5 text-[#85877C]" />
+                                        <span className="text-sm font-medium text-[#85877C]">FastAPI</span>
+                                    </div>
+                                </InfiniteSlider>
 
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          style={{
-            fontSize: 18, lineHeight: 1.7, color: '#85877C',
-            maxWidth: 600, margin: '0 auto 40px',
-          }}
-        >
-          Four AI agents collaborate in real-time to analyze demand, select suppliers,
-          optimize containers, and compile purchase orders — with human oversight at every step.
-        </motion.p>
+                                <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-[#0F0902]" />
+                                <div className="absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-[#0F0902]" />
+                                <ProgressiveBlur
+                                    className="pointer-events-none absolute left-0 top-0 h-full w-20"
+                                    direction="left"
+                                    blurIntensity={1}
+                                />
+                                <ProgressiveBlur
+                                    className="pointer-events-none absolute right-0 top-0 h-full w-20"
+                                    direction="right"
+                                    blurIntensity={1}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </section>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.6 }}
-          style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}
-        >
-          <Link
-            href="/pipeline"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              padding: '14px 32px', borderRadius: 12, fontSize: 15, fontWeight: 600,
-              background: 'linear-gradient(135deg, #2B4162, #9D5C63)',
-              color: '#FFFACC', textDecoration: 'none',
-              boxShadow: '0 0 40px rgba(43,65,98,0.3)',
-              transition: 'transform 0.2s, box-shadow 0.2s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 0 50px rgba(43,65,98,0.5)'; }}
-            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 0 40px rgba(43,65,98,0.3)'; }}
-          >
-            Run Pipeline <ArrowRight size={18} />
-          </Link>
-          <Link
-            href="/dashboard"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              padding: '14px 32px', borderRadius: 12, fontSize: 15, fontWeight: 600,
-              background: 'transparent', color: '#FFFACC',
-              border: '1px solid rgba(133,135,124,0.3)',
-              textDecoration: 'none', transition: 'border-color 0.2s',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(133,135,124,0.6)')}
-            onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(133,135,124,0.3)')}
-          >
-            View Dashboard <ChevronRight size={18} />
-          </Link>
-        </motion.div>
+                {/* Features */}
+                <section id="features" className="bg-[#0F0902] py-24">
+                    <div className="mx-auto max-w-6xl px-6">
+                        <div className="mb-16 text-center">
+                            <span className="text-xs font-semibold uppercase tracking-widest text-[#4A6FA8]">Capabilities</span>
+                            <h2 className="mt-3 text-4xl font-bold tracking-tight text-[#FFFACC]">End-to-End Automation</h2>
+                            <p className="mx-auto mt-4 max-w-xl text-[#85877C]">
+                                From demand forecasting to PO approval — four specialized agents handle every step.
+                            </p>
+                        </div>
+                        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                            {[
+                                { icon: Brain, title: 'Demand Analysis', desc: 'AI forecasts demand from historical data, seasonality, and market signals.', accent: '#4A6FA8' },
+                                { icon: Target, title: 'Supplier Selection', desc: 'Scores and selects optimal suppliers based on quality, cost, and reliability.', accent: '#5D9975' },
+                                { icon: Package, title: 'Container Optimization', desc: 'Maximizes container utilization to minimize freight costs per unit.', accent: '#C4883A' },
+                                { icon: FileCheck, title: 'PO Compilation', desc: 'Auto-generates compliant purchase orders with full decision rationale.', accent: '#9D5C63' },
+                                { icon: Users, title: 'Human-in-the-Loop', desc: 'Manager approval gate ensures oversight before any PO is finalized.', accent: '#4A6FA8' },
+                                { icon: ShieldCheck, title: 'Full Audit Trail', desc: 'Every agent decision logged with inputs, outputs, and confidence scores.', accent: '#5D9975' },
+                            ].map((f) => (
+                                <div
+                                    key={f.title}
+                                    className="group/card rounded-2xl border border-[rgba(133,135,124,0.15)] bg-[#2F2504] p-7 transition-all duration-300 hover:-translate-y-1 hover:border-[rgba(133,135,124,0.35)]"
+                                >
+                                    <div
+                                        className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl"
+                                        style={{ background: `${f.accent}20` }}
+                                    >
+                                        <f.icon className="h-5 w-5" style={{ color: f.accent }} />
+                                    </div>
+                                    <h3 className="mb-2 text-base font-bold text-[#FFFACC]">{f.title}</h3>
+                                    <p className="text-sm leading-relaxed text-[#85877C]">{f.desc}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.8 }}
-          style={{
-            display: 'flex', justifyContent: 'center', gap: 48,
-            marginTop: 64, paddingTop: 40,
-            borderTop: '1px solid rgba(133,135,124,0.12)',
-          }}
-        >
-          {[
-            { value: '4', label: 'AI Agents' },
-            { value: '4', label: 'MCP Servers' },
-            { value: '100%', label: 'Auditable' },
-            { value: '<30s', label: 'Per PO' },
-          ].map(stat => (
-            <div key={stat.label} style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 28, fontWeight: 800, color: '#FFFACC', fontFamily: 'JetBrains Mono, monospace' }}>
-                {stat.value}
-              </div>
-              <div style={{ fontSize: 12, color: '#85877C', marginTop: 4 }}>{stat.label}</div>
-            </div>
-          ))}
-        </motion.div>
-      </div>
-    </section>
-  );
+                {/* Pipeline */}
+                <section id="pipeline" className="bg-[#0F0902] py-24">
+                    <div className="mx-auto max-w-4xl px-6">
+                        <div className="mb-16 text-center">
+                            <span className="text-xs font-semibold uppercase tracking-widest text-[#9D5C63]">Architecture</span>
+                            <h2 className="mt-3 text-4xl font-bold tracking-tight text-[#FFFACC]">Multi-Agent Pipeline</h2>
+                            <p className="mx-auto mt-4 max-w-xl text-[#85877C]">
+                                LangGraph orchestrates four specialized agents connected to MCP data servers.
+                            </p>
+                        </div>
+                        <div className="relative flex flex-col">
+                            <div className="absolute bottom-10 left-[30px] top-10 w-0.5 bg-gradient-to-b from-[#4A6FA8] to-[#9D5C63] opacity-30" />
+                            {[
+                                { agent: 'Demand Analyst', model: 'gpt-4o-mini', desc: 'Analyzes forecasts, inventory, and market data', accent: '#4A6FA8' },
+                                { agent: 'Supplier Selector', model: 'gpt-4o-mini', desc: 'Scores and ranks suppliers for each SKU', accent: '#5D9975' },
+                                { agent: 'Container Optimizer', model: 'gpt-4o-mini', desc: 'Packs items into containers for lowest freight', accent: '#C4883A' },
+                                { agent: 'PO Compiler', model: 'gpt-4o-mini', desc: 'Generates final PO with full rationale', accent: '#9D5C63' },
+                            ].map((step, i) => (
+                                <div key={step.agent} className="flex items-center gap-6 py-5">
+                                    <div
+                                        className="relative z-10 flex h-[60px] w-[60px] flex-shrink-0 items-center justify-center rounded-full border-2"
+                                        style={{ borderColor: step.accent, background: `${step.accent}20` }}
+                                    >
+                                        <span className="font-mono text-xl font-extrabold" style={{ color: step.accent }}>
+                                            {i + 1}
+                                        </span>
+                                    </div>
+                                    <div className="flex-1 rounded-xl border border-[rgba(133,135,124,0.15)] bg-[#2F2504] px-6 py-4">
+                                        <div className="mb-1 flex items-center justify-between">
+                                            <span className="text-[15px] font-bold text-[#FFFACC]">{step.agent}</span>
+                                            <span className="rounded bg-[rgba(133,135,124,0.1)] px-2 py-0.5 font-mono text-[11px] text-[#85877C]">
+                                                {step.model}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-[#85877C]">{step.desc}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* Stats */}
+                <section id="results" className="bg-[rgba(47,37,4,0.5)] py-20">
+                    <div className="mx-auto max-w-4xl px-6">
+                        <div className="mb-12 text-center">
+                            <h2 className="text-3xl font-extrabold tracking-tight text-[#FFFACC]">Built for Impact</h2>
+                            <p className="mt-3 text-[#85877C]">Designed for the Cummins Xtern 2026 competition.</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-5 lg:grid-cols-4">
+                            {[
+                                { value: '87%', label: 'Faster PO Generation', desc: 'vs. manual process' },
+                                { value: '99.2%', label: 'Container Utilization', desc: 'optimal packing' },
+                                { value: '4x', label: 'Supplier Coverage', desc: 'evaluated per order' },
+                                { value: '0', label: 'Unaudited Decisions', desc: 'full transparency' },
+                            ].map((s) => (
+                                <div key={s.label} className="rounded-2xl border border-[rgba(133,135,124,0.12)] bg-[#1A1006] p-7 text-center">
+                                    <div className="bg-gradient-to-r from-[#4A6FA8] to-[#9D5C63] bg-clip-text font-mono text-4xl font-extrabold text-transparent">
+                                        {s.value}
+                                    </div>
+                                    <div className="mt-2 text-sm font-semibold text-[#FFFACC]">{s.label}</div>
+                                    <div className="mt-1 text-xs text-[#85877C]">{s.desc}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* CTA */}
+                <section id="about" className="relative overflow-hidden py-24 text-center">
+                    <div className="absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(43,65,98,0.25)_0%,transparent_70%)]" />
+                    <div className="relative z-10 mx-auto max-w-2xl px-6">
+                        <h2 className="text-4xl font-extrabold tracking-tight text-[#FFFACC]">Ready to automate procurement?</h2>
+                        <p className="mx-auto mt-4 max-w-lg text-[#85877C]">
+                            Launch the multi-agent pipeline and generate your first AI-driven purchase order in under 30 seconds.
+                        </p>
+                        <div className="mt-10">
+                            <Button asChild size="lg" className="bg-gradient-to-r from-[#2B4162] to-[#9D5C63] px-10 text-base font-bold text-[#FFFACC] shadow-[0_0_50px_rgba(43,65,98,0.35)] hover:opacity-90">
+                                <Link href="/pipeline">
+                                    <span>Launch Pipeline</span>
+                                    <ArrowRight className="ml-2 h-5 w-5" />
+                                </Link>
+                            </Button>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Footer */}
+                <footer className="border-t border-[rgba(133,135,124,0.12)] py-10 text-center">
+                    <div className="mb-5 flex flex-wrap justify-center gap-8">
+                        {[
+                            { href: '/', label: 'Dashboard' },
+                            { href: '/pipeline', label: 'Pipeline' },
+                            { href: '/approvals', label: 'Approvals' },
+                            { href: '/suppliers', label: 'Suppliers' },
+                            { href: '/logs', label: 'Decision Log' },
+                            { href: '/agents', label: 'Agents' },
+                        ].map((link) => (
+                            <Link
+                                key={link.href}
+                                href={link.href}
+                                className="text-sm text-[#85877C] transition-colors hover:text-[#FFFACC]">
+                                {link.label}
+                            </Link>
+                        ))}
+                    </div>
+                    <p className="text-xs text-[#85877C]">
+                        ProcureAI &middot; Cummins Xtern 2026 &middot; Multi-Agent PO Automation
+                    </p>
+                </footer>
+            </main>
+        </>
+    )
 }
-
-/* ── Features Section ────────────────────────────────────────── */
-
-const FEATURES = [
-  { icon: Brain,       title: 'Demand Analysis',       desc: 'AI forecasts demand from historical data, seasonality, and market signals.',     accent: '#4A6FA8' },
-  { icon: Target,      title: 'Supplier Selection',     desc: 'Scores and selects optimal suppliers based on quality, cost, and reliability.',  accent: '#5D9975' },
-  { icon: Package,     title: 'Container Optimization', desc: 'Maximizes container utilization to minimize freight costs per unit.',             accent: '#C4883A' },
-  { icon: FileCheck,   title: 'PO Compilation',         desc: 'Auto-generates compliant purchase orders with full decision rationale.',         accent: '#9D5C63' },
-  { icon: Users,       title: 'Human-in-the-Loop',      desc: 'Manager approval gate ensures oversight before any PO is finalized.',            accent: '#4A6FA8' },
-  { icon: ShieldCheck, title: 'Full Audit Trail',        desc: 'Every agent decision logged with inputs, outputs, and confidence scores.',       accent: '#5D9975' },
-];
-
-function FeaturesSection() {
-  return (
-    <section id="features" style={{ padding: '100px 40px', maxWidth: 1100, margin: '0 auto' }}>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
-        style={{ textAlign: 'center', marginBottom: 64 }}
-      >
-        <span style={{
-          fontSize: 12, fontWeight: 600, color: '#4A6FA8',
-          textTransform: 'uppercase', letterSpacing: '0.1em',
-        }}>
-          Capabilities
-        </span>
-        <h2 style={{ fontSize: 36, fontWeight: 800, color: '#FFFACC', margin: '12px 0 16px', letterSpacing: '-0.02em' }}>
-          End-to-End Automation
-        </h2>
-        <p style={{ fontSize: 16, color: '#85877C', maxWidth: 550, margin: '0 auto' }}>
-          From demand forecasting to PO approval — four specialized agents handle every step.
-        </p>
-      </motion.div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
-        {FEATURES.map((f, i) => (
-          <motion.div
-            key={f.title}
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: i * 0.1 }}
-            style={{
-              padding: '28px 24px', borderRadius: 16,
-              background: '#2F2504', border: '1px solid rgba(133,135,124,0.15)',
-              transition: 'border-color 0.3s, transform 0.3s',
-              cursor: 'default',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = f.accent; e.currentTarget.style.transform = 'translateY(-4px)'; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(133,135,124,0.15)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-          >
-            <div style={{
-              width: 44, height: 44, borderRadius: 12, marginBottom: 16,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: `${f.accent}20`,
-            }}>
-              <f.icon size={22} color={f.accent} />
-            </div>
-            <h3 style={{ fontSize: 16, fontWeight: 700, color: '#FFFACC', marginBottom: 8 }}>{f.title}</h3>
-            <p style={{ fontSize: 13, color: '#85877C', lineHeight: 1.6 }}>{f.desc}</p>
-          </motion.div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-/* ── Pipeline Section ────────────────────────────────────────── */
-
-const PIPELINE_STEPS = [
-  { agent: 'Demand Analyst',        model: 'gpt-4o-mini', desc: 'Analyzes forecasts, inventory, and market data',   accent: '#4A6FA8' },
-  { agent: 'Supplier Selector',     model: 'gpt-4o-mini', desc: 'Scores and ranks suppliers for each SKU',          accent: '#5D9975' },
-  { agent: 'Container Optimizer',   model: 'gpt-4o-mini', desc: 'Packs items into containers for lowest freight',   accent: '#C4883A' },
-  { agent: 'PO Compiler',           model: 'gpt-4o-mini', desc: 'Generates final PO with full rationale',           accent: '#9D5C63' },
-];
-
-function PipelineSection() {
-  return (
-    <section id="pipeline" style={{ padding: '100px 40px', maxWidth: 1000, margin: '0 auto' }}>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
-        style={{ textAlign: 'center', marginBottom: 64 }}
-      >
-        <span style={{
-          fontSize: 12, fontWeight: 600, color: '#9D5C63',
-          textTransform: 'uppercase', letterSpacing: '0.1em',
-        }}>
-          Architecture
-        </span>
-        <h2 style={{ fontSize: 36, fontWeight: 800, color: '#FFFACC', margin: '12px 0 16px', letterSpacing: '-0.02em' }}>
-          Multi-Agent Pipeline
-        </h2>
-        <p style={{ fontSize: 16, color: '#85877C', maxWidth: 550, margin: '0 auto' }}>
-          LangGraph orchestrates four specialized agents connected to MCP data servers.
-        </p>
-      </motion.div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 0, position: 'relative' }}>
-        <div style={{
-          position: 'absolute', left: 30, top: 40, bottom: 40,
-          width: 2, background: 'linear-gradient(to bottom, #4A6FA8, #9D5C63)',
-          opacity: 0.3,
-        }} />
-
-        {PIPELINE_STEPS.map((step, i) => (
-          <motion.div
-            key={step.agent}
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: i * 0.15 }}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 24,
-              padding: '20px 0',
-            }}
-          >
-            <div style={{
-              width: 60, height: 60, borderRadius: '50%',
-              background: `${step.accent}20`, border: `2px solid ${step.accent}`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0, zIndex: 2,
-            }}>
-              <span style={{ fontSize: 20, fontWeight: 800, color: step.accent, fontFamily: 'JetBrains Mono, monospace' }}>
-                {i + 1}
-              </span>
-            </div>
-
-            <div style={{
-              flex: 1, padding: '18px 24px', borderRadius: 12,
-              background: '#2F2504', border: '1px solid rgba(133,135,124,0.15)',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <span style={{ fontSize: 15, fontWeight: 700, color: '#FFFACC' }}>{step.agent}</span>
-                <span style={{
-                  fontSize: 11, color: '#85877C', fontFamily: 'JetBrains Mono, monospace',
-                  padding: '2px 8px', background: 'rgba(133,135,124,0.1)', borderRadius: 4,
-                }}>
-                  {step.model}
-                </span>
-              </div>
-              <p style={{ fontSize: 13, color: '#85877C', margin: 0 }}>{step.desc}</p>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-/* ── Stats Section ───────────────────────────────────────────── */
-
-function StatsSection() {
-  const stats = [
-    { value: '87%', label: 'Faster PO Generation', desc: 'vs. manual process' },
-    { value: '99.2%', label: 'Container Utilization', desc: 'optimal packing' },
-    { value: '4x', label: 'Supplier Coverage', desc: 'evaluated per order' },
-    { value: '0', label: 'Decisions Without Audit', desc: 'full transparency' },
-  ];
-
-  return (
-    <section id="results" style={{ padding: '80px 40px', background: 'rgba(47,37,4,0.5)' }}>
-      <div style={{ maxWidth: 1000, margin: '0 auto' }}>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          style={{ textAlign: 'center', marginBottom: 48 }}
-        >
-          <h2 style={{ fontSize: 32, fontWeight: 800, color: '#FFFACC', margin: '0 0 12px', letterSpacing: '-0.02em' }}>
-            Built for Impact
-          </h2>
-          <p style={{ fontSize: 15, color: '#85877C' }}>
-            Designed for the Cummins Xtern 2026 competition.
-          </p>
-        </motion.div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
-          {stats.map((s, i) => (
-            <motion.div
-              key={s.label}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
-              style={{
-                textAlign: 'center', padding: '28px 16px', borderRadius: 16,
-                background: '#1A1006', border: '1px solid rgba(133,135,124,0.12)',
-              }}
-            >
-              <div style={{
-                fontSize: 36, fontWeight: 800, fontFamily: 'JetBrains Mono, monospace',
-                background: 'linear-gradient(135deg, #4A6FA8, #9D5C63)',
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                marginBottom: 8,
-              }}>
-                {s.value}
-              </div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#FFFACC', marginBottom: 4 }}>{s.label}</div>
-              <div style={{ fontSize: 12, color: '#85877C' }}>{s.desc}</div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ── CTA Section ─────────────────────────────────────────────── */
-
-function CTASection() {
-  return (
-    <section style={{
-      padding: '100px 40px', textAlign: 'center',
-      position: 'relative', overflow: 'hidden',
-    }}>
-      <motion.div
-        animate={{ scale: [1, 1.1, 1], opacity: [0.1, 0.2, 0.1] }}
-        transition={{ duration: 6, repeat: Infinity }}
-        style={{
-          position: 'absolute', top: '50%', left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: 500, height: 500, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(43,65,98,0.25) 0%, transparent 70%)',
-          pointerEvents: 'none',
-        }}
-      />
-      <div style={{ position: 'relative', zIndex: 2 }}>
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          style={{ fontSize: 36, fontWeight: 800, color: '#FFFACC', margin: '0 0 16px', letterSpacing: '-0.02em' }}
-        >
-          Ready to automate procurement?
-        </motion.h2>
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          style={{ fontSize: 16, color: '#85877C', maxWidth: 500, margin: '0 auto 36px' }}
-        >
-          Launch the multi-agent pipeline and generate your first AI-driven purchase order in under 30 seconds.
-        </motion.p>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          <Link
-            href="/pipeline"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 10,
-              padding: '16px 40px', borderRadius: 14, fontSize: 16, fontWeight: 700,
-              background: 'linear-gradient(135deg, #2B4162, #9D5C63)',
-              color: '#FFFACC', textDecoration: 'none',
-              boxShadow: '0 0 50px rgba(43,65,98,0.35)',
-              transition: 'transform 0.2s, box-shadow 0.2s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 0 60px rgba(43,65,98,0.55)'; }}
-            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 0 50px rgba(43,65,98,0.35)'; }}
-          >
-            Launch Pipeline <ArrowRight size={20} />
-          </Link>
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
-/* ── Footer ──────────────────────────────────────────────────── */
-
-function Footer() {
-  return (
-    <footer style={{
-      padding: '40px 40px', textAlign: 'center',
-      borderTop: '1px solid rgba(133,135,124,0.12)',
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 32, marginBottom: 20 }}>
-        {[
-          { href: '/dashboard', label: 'Dashboard' },
-          { href: '/pipeline', label: 'Pipeline' },
-          { href: '/approvals', label: 'Approvals' },
-          { href: '/suppliers', label: 'Suppliers' },
-          { href: '/logs', label: 'Decision Log' },
-          { href: '/agents', label: 'Agents' },
-        ].map(link => (
-          <Link
-            key={link.href}
-            href={link.href}
-            style={{ color: '#85877C', fontSize: 13, textDecoration: 'none', fontWeight: 500 }}
-            onMouseEnter={e => (e.currentTarget.style.color = '#FFFACC')}
-            onMouseLeave={e => (e.currentTarget.style.color = '#85877C')}
-          >
-            {link.label}
-          </Link>
-        ))}
-      </div>
-      <p style={{ fontSize: 12, color: '#85877C' }}>
-        ProcureAI &middot; Cummins Xtern 2026 &middot; Multi-Agent PO Automation
-      </p>
-    </footer>
-  );
-}
-
-/* ── Landing Page ────────────────────────────────────────────── */
 
 export default function LandingPage() {
-  return (
-    <div style={{ minHeight: '100vh', background: '#0F0902', color: '#FFFACC', overflowX: 'hidden' }}>
-      <Navigation />
-      <HeroSection />
-      <FeaturesSection />
-      <PipelineSection />
-      <StatsSection />
-      <CTASection />
-      <Footer />
-    </div>
-  );
+    return <HeroMain />
 }

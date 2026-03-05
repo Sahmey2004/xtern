@@ -1,49 +1,52 @@
-import NavLinks from '@/components/NavLinks';
+import BottomNav from '@/components/BottomNav';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)' }}>
-      <aside style={{
-        width: 220,
-        background: 'var(--bg-secondary)',
-        borderRight: '1px solid var(--border)',
-        padding: '24px 16px',
-        display: 'flex',
-        flexDirection: 'column',
+    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)' }}>
+      {/* Top bar */}
+      <header style={{
         position: 'sticky',
         top: 0,
-        height: '100vh',
-        flexShrink: 0,
-        overflowY: 'auto',
+        zIndex: 40,
+        background: 'var(--bg-secondary)',
+        borderBottom: '1px solid var(--border)',
+        padding: '12px 24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backdropFilter: 'blur(16px)',
       }}>
-        <div style={{ marginBottom: 32, paddingLeft: 4 }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{
+            fontSize: 16, fontWeight: 700,
+            color: 'var(--text-primary)', letterSpacing: '-0.01em',
+          }}>
             ProcureAI
           </div>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>
+          <div style={{
+            fontSize: 11, color: 'var(--text-muted)',
+            padding: '2px 8px', borderRadius: 4,
+            background: 'var(--bg-card)',
+          }}>
             Supply Chain Automation
           </div>
         </div>
-
-        <NavLinks />
-
-        <div style={{ marginTop: 'auto', paddingTop: 24, borderTop: '1px solid var(--border)', paddingLeft: 4 }}>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)', lineHeight: 1.6 }}>
-            Cummins Xtern 2026<br />
-            Multi-Agent PO System
-          </div>
+        <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>
+          Cummins Xtern 2026
         </div>
-      </aside>
+      </header>
 
+      {/* Main content with bottom padding for nav */}
       <main style={{
-        flex: 1,
-        padding: 32,
-        minHeight: '100vh',
-        overflowY: 'auto',
-        background: 'var(--bg-primary)',
+        padding: '24px 32px 80px',
+        maxWidth: 1200,
+        margin: '0 auto',
       }}>
         {children}
       </main>
+
+      {/* Bottom navigation */}
+      <BottomNav />
     </div>
   );
 }
