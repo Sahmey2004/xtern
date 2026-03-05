@@ -356,15 +356,5 @@ function HeroMain() {
 }
 
 export default function LandingPage() {
-  return (
-    <div style={{ minHeight: '100vh', width: '100%', background: '#0F0902', color: '#FFFACC', overflowX: 'hidden' }}>
-      <Navigation />
-      <HeroSection />
-      <FeaturesSection />
-      <PipelineSection />
-      <StatsSection />
-      <CTASection />
-      <Footer />
-    </div>
-  );
+    return <HeroMain />
 }
