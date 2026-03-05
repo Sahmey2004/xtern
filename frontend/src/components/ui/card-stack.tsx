@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion, type PanInfo } from "framer-motion";
 import { SquareArrowOutUpRight } from "lucide-react";
 import Link from "next/link";
 
@@ -182,8 +182,8 @@ export function CardStack<T extends CardStackItem>({
                     dragConstraints: { left: 0, right: 0 },
                     dragElastic: 0.18,
                     onDragEnd: (
-                      _e: any,
-                      info: { offset: { x: number }; velocity: { x: number } },
+                      _event: MouseEvent | TouchEvent | PointerEvent,
+                      info: PanInfo,
                     ) => {
                       if (reduceMotion) return;
                       const travel = info.offset.x;

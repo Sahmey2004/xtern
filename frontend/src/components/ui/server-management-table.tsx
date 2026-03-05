@@ -1,17 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { X, Power, Pause, Play, RotateCcw, Monitor, Terminal, Cpu, Server } from "lucide-react";
 
 function cn(...classes: Array<string | undefined | null | false>) {
   return classes.filter(Boolean).join(" ");
-}
-
-function getCPUBarColor(pct: number) {
-  if (pct >= 90) return "#9D5C63";
-  if (pct >= 70) return "#C4883A";
-  return "#5D9975";
 }
 
 export interface ServerItem {
@@ -112,8 +106,7 @@ export function ServerManagementTable({
 }: ServerManagementTableProps = {}) {
   const [servers, setServers] = useState<ServerItem[]>(initialServers);
   const [hoveredServer, setHoveredServer] = useState<string | null>(null);
-  const [selectedServer, setSelectedServer] = useState<ServerItem | null>(null);
-  const shouldReduceMotion = useReducedMotion();
+  const [selectedServerId, setSelectedServerId] = useState<string | null>(null);
 
   const handleStatusChange = (serverId: string, newStatus: ServerItem["status"]) => {
     onStatusChange?.(serverId, newStatus);
@@ -122,12 +115,9 @@ export function ServerManagementTable({
     );
   };
 
-  useEffect(() => {
-    if (selectedServer) {
-      const updated = servers.find((s) => s.id === selectedServer.id);
-      if (updated) setSelectedServer(updated);
-    }
-  }, [servers, selectedServer]);
+  const selectedServer = selectedServerId
+    ? servers.find((s) => s.id === selectedServerId) ?? null
+    : null;
 
   const getOSIcon = (osType: ServerItem["osType"]) => {
     const iconClass = "w-4 h-4 text-white";
@@ -236,7 +226,7 @@ export function ServerManagementTable({
                   onHoverEnd={() => setHoveredServer(null)}
                   animate={{ backgroundColor: isHovered ? "rgba(255,255,255,0.02)" : "transparent" }}
                   style={{ cursor: "pointer" }}
-                  onClick={() => setSelectedServer(server)}
+                  onClick={() => setSelectedServerId(server.id)}
                 >
                   {/* Number */}
                   <td style={{ padding: "12px 16px", borderBottom: "1px solid var(--border)" }}>
@@ -467,7 +457,7 @@ export function ServerManagementTable({
               justifyContent: "center",
               padding: 24,
             }}
-            onClick={() => setSelectedServer(null)}
+            onClick={() => setSelectedServerId(null)}
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0, y: 10 }}
@@ -508,7 +498,7 @@ export function ServerManagementTable({
                   </div>
                 </div>
                 <button
-                  onClick={() => setSelectedServer(null)}
+                  onClick={() => setSelectedServerId(null)}
                   style={{
                     width: 32,
                     height: 32,
