@@ -9,10 +9,10 @@ WORKDIR /app
 
 # Build MCP servers
 COPY mcp-servers/ ./mcp-servers/
-RUN cd mcp-servers/erp-data-server && npm ci && npm run build
-RUN cd mcp-servers/supplier-data-server && npm ci && npm run build
-RUN cd mcp-servers/logistics-server && npm ci && npm run build
-RUN cd mcp-servers/po-management-server && npm ci && npm run build
+RUN cd mcp-servers/erp-data-server && npm ci && npm run build && ls dist/
+RUN cd mcp-servers/supplier-data-server && npm ci && npm run build && ls dist/
+RUN cd mcp-servers/logistics-server && npm ci && npm run build && ls dist/
+RUN cd mcp-servers/po-management-server && npm ci && npm run build && ls dist/
 
 # Install Python dependencies
 COPY backend/requirements-prod.txt ./

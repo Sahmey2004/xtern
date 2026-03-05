@@ -12,7 +12,7 @@ export default function SidebarShell({ children }: { children: React.ReactNode }
   const pathname = usePathname();
 
   // Pages with their own full-page layout render without sidebar
-  if (pathname === '/login') {
+  if (pathname === '/login' || pathname === '/') {
     return <>{children}</>;
   }
 
