@@ -1,0 +1,10 @@
+frontend/
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+**/*.pyc
+**/.env
+.git/
+.gitignore
+mcp-servers/**/node_modules/
+mcp-servers/**/dist/
