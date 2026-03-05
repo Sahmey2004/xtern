@@ -104,7 +104,7 @@ function HeroMain() {
     return (
         <>
             <HeroHeader />
-            <main className="overflow-x-hidden bg-[#0F0902] text-[#FFFACC]">
+            <main className="w-full overflow-x-hidden bg-[#0F0902] text-[#FFFACC]">
                 {/* Hero */}
                 <section>
                     <div className="pb-24 pt-12 md:pb-32 lg:pb-56 lg:pt-44">
