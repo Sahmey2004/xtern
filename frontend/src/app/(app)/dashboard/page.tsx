@@ -71,11 +71,11 @@ export default function DashboardPage() {
     // Supabase counts
     async function load() {
       const tables = ['products', 'suppliers', 'forecasts', 'inventory', 'purchase_orders', 'decision_log'];
+      const counts_arr = await Promise.all(
+        tables.map(t => supabase.from(t).select('*', { count: 'exact', head: true }))
+      );
       const result: Record<string, number> = {};
-      for (const t of tables) {
-        const { count } = await supabase.from(t).select('*', { count: 'exact', head: true });
-        result[t] = count ?? 0;
-      }
+      tables.forEach((t, i) => { result[t] = counts_arr[i].count ?? 0; });
       setCounts(result);
 
       // Recent POs
